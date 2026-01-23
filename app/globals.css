@@ -24,3 +24,27 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* custom scrollbar start */
+/* width */
+.custom-scroller::-webkit-scrollbar {
+  width: 6px;
+}
+
+/* Track */
+.custom-scroller::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Handle */
+.custom-scroller::-webkit-scrollbar-thumb {
+  background: #cdcdcd;
+  border-radius: 20px;
+}
+
+/* Handle on hover */
+.custom-scroller::-webkit-scrollbar-thumb:hover {
+  background: #cdcdcd;
+}
+
+/* custom scrollbar end */

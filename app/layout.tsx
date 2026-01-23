@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Roboto  } from "next/font/google";
 import "./globals.css";
+import { WidgetProvider } from "@/contexts/WidgetContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,7 +33,9 @@ export default function RootLayout({
       <body
           className={`${geistSans.variable} ${geistMono.variable} ${roboto.className} antialiased`}
       >
-        {children}
+        <WidgetProvider>
+          {children}
+        </WidgetProvider>
       </body>
     </html>
   );

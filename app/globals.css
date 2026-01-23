@@ -48,3 +48,24 @@ body {
 }
 
 /* custom scrollbar end */
+
+.card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  text-decoration: none;
+  position: relative;
+  box-shadow: 0 .0625rem #1a1a1a12;
+  background-color: #fff;
+}
+
+.card:before {
+  content: "";
+  z-index: 32px;
+  pointer-events: none;
+  mix-blend-mode: luminosity;
+  border-radius: 12px;
+  position: absolute;
+  inset: 0;
+  box-shadow: inset .0625rem 0 0 0 #00000021, inset -.0625rem 0 0 0 #00000021, inset 0 -.0625rem 0 0 #0000002b, inset 0 .0625rem 0 0 #cccccc80;
+}

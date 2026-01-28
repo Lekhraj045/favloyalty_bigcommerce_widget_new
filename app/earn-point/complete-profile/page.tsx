@@ -49,7 +49,7 @@ export default function CompleteProfilePage({ onBack }: CompleteProfilePageProps
     if (showProfileCompleted) {
         return (
             <WidgetWrapper header={header}>
-                <div className="p-4 relative z-10 h-[calc(100%-82px)] overflow-y-auto custom-scroller">
+                <div className="p-4 relative z-10 h-[calc(100vh-84px)] overflow-y-auto custom-scroller">
                     <motion.div
                         initial={{ x: 100, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
@@ -67,7 +67,7 @@ export default function CompleteProfilePage({ onBack }: CompleteProfilePageProps
     return (
         <WidgetWrapper header={header}>
             {/* Body */}
-            <div className="p-4 relative z-10 h-[calc(100%-82px)] overflow-y-auto custom-scroller">
+            <div className="p-4 relative z-10 h-[calc(100vh-84px)] overflow-y-auto custom-scroller">
                 <motion.div
                     initial={{ x: 100, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}

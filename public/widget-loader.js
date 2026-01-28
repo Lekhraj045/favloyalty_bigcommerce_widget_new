@@ -8,7 +8,7 @@
   console.log("FavLoyalty widget loaded");
   // Configuration
   const DEFAULT_CONFIG = {
-    widgetUrl: "https://favloyaltybigcommercewidget.share.zrok.io/", // Update with your deployed widget URL
+    widgetUrl: "https://ddc7aee02935.ngrok-free.app/", // Update with your deployed widget URL
     position: "bottom-right",
     apiUrl: "https://favbigcommerce.share.zrok.io", // Your backend API URL
     storeId: "",
@@ -203,7 +203,7 @@
     container.style.cssText = `
       position: fixed;
       z-index: 9999;
-      width: 360px;
+      width: 390px;
       max-width: 85vw;
       max-height: 85vh;
       display: none;
@@ -253,9 +253,9 @@
     iframe.style.cssText = `
       border: none;
       width: 100%;
-      height: 480px;
-      min-height: 480px;
-      max-height: 480px;
+      height: calc(100vh - 120px);
+      // min-height: 480px;
+      max-height: 586px;
       background: transparent;
       display: block;
       overflow: hidden;
@@ -281,12 +281,12 @@
         iframe.style.pointerEvents = "auto";
       }
 
-      // Keep iframe height fixed at 580px (ignore height updates)
+      // Keep iframe height fixed at 586px (ignore height updates)
       if (event.data.type === "fav-loyalty-widget-height") {
-        // Don't update height - keep it fixed at 580px
-        iframe.style.height = "580px";
-        iframe.style.minHeight = "580px";
-        iframe.style.maxHeight = "580px";
+        // Don't update height - keep it fixed at 590px
+        // iframe.style.height = "586px";
+        // iframe.style.minHeight = "586px";
+        // iframe.style.maxHeight = "586px";
       }
 
       // Handle close message from widget

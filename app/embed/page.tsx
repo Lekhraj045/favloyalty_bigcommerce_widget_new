@@ -65,7 +65,7 @@ export default function EmbedPage() {
     if (isInIframe) {
       window.parent.postMessage({ type: "fav-loyalty-widget-loaded" }, "*");
       window.parent.postMessage(
-        { type: "fav-loyalty-widget-height", height: 580 },
+        { type: "fav-loyalty-widget-height", height: 586 },
         "*",
       );
     }
@@ -74,9 +74,9 @@ export default function EmbedPage() {
   return (
     <div
       style={{
-        height: "580px",
-        minHeight: "580px",
-        maxHeight: "580px",
+        height: "586px",
+        minHeight: "586px",
+        maxHeight: "586px",
         background: "transparent",
         padding: "0",
         margin: "0",

@@ -24,8 +24,8 @@ export default function WidgetContainer({
       <div
         className={
           embedded
-            ? "w-full h-full rounded-2xl border border-[#DEDEDE] bg-white shadow-sm overflow-hidden widget-container"
-            : "w-[390px] right-4 fixed h-[calc(100vh-120px)] bottom-[calc(100px)] max-h-[586px] rounded-2xl border border-[#DEDEDE] bg-white shadow-sm overflow-hidden widget-container"
+            ? "w-full h-full rounded-2xl bg-white overflow-hidden widget-container"
+            : "w-[390px] right-4 fixed h-[calc(100vh-120px)] bottom-[calc(100px)] max-h-[586px] rounded-2xl bg-white overflow-hidden widget-container"
         }
       >
         <div className="h-full">

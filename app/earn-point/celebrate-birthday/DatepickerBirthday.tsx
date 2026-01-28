@@ -30,6 +30,7 @@ export default function DatepickerBirthday({ selectedDate, onDateChange }: Datep
         yearDropdownItemNumber={100}
         minDate={minDate}
         maxDate={maxDate}
+        popperPlacement="bottom-start"
       />
 
       {/* Calendar Icon */}

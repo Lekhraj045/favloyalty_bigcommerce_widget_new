@@ -64,7 +64,7 @@ export default function TransactionHistoryPage() {
 
     const header = (
         <div
-            className="text-white p-4 relative rounded-t-2xl h-[calc(100%-82px)]"
+            className="text-white p-4 relative rounded-t-2xl"
             style={{ backgroundColor: "#62a63f" }}
         >
             <div className='flex gap-2'>
@@ -93,7 +93,7 @@ export default function TransactionHistoryPage() {
     return (
         <WidgetWrapper header={header}>
             {/* Body */}
-            <div className="p-4 relative z-10 h-[calc(100%-82px)]">
+            <div className="p-4 relative z-10">
                 <motion.div
                     initial={{ x: 100, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
@@ -140,7 +140,7 @@ export default function TransactionHistoryPage() {
                             Recent Transactions
                         </h3>
 
-                        <div className="space-y-3 h-[calc(100%-42px)] overflow-y-auto custom-scroller">
+                        <div className="space-y-3 h-[calc(100vh-270px)] overflow-y-auto custom-scroller">
                             {transactions.map((tx) => (
                                 <div
                                     key={tx.id}

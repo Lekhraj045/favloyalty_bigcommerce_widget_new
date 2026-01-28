@@ -4,14 +4,14 @@ import DatePicker from "react-datepicker";
 import { Calendar } from "lucide-react";
 import "react-datepicker/dist/react-datepicker.css";
 
-interface DatepickerBirthdayProps {
+interface DatepickerWeadingAnniversaryProps {
   selectedDate: Date | null;
   onDateChange: (date: Date | null) => void;
 }
 
-export default function DatepickerBirthday({ selectedDate, onDateChange }: DatepickerBirthdayProps) {
+export default function DatepickerWeadingAnniversary({ selectedDate, onDateChange }: DatepickerWeadingAnniversaryProps) {
   
-  // Set min and max dates for birthday (e.g., 100 years ago to today)
+  // Set min and max dates for wedding anniversary (e.g., 100 years ago to today)
   const maxDate = new Date();
   const minDate = new Date();
   minDate.setFullYear(minDate.getFullYear() - 100);

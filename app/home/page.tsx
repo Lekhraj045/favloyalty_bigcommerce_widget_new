@@ -57,7 +57,7 @@ export default function HomePage() {
             </div>
 
             {/* Body */}
-            <div className="px-4 pb-4 space-y-4 -mt-5 relative z-10 h-[calc(100vh-190px)] overflow-y-auto custom-scroller">
+            <div className="px-4 pb-4 space-y-4 -mt-5 relative z-10 h-[calc(100%-73px)] overflow-y-auto custom-scroller">
                 {/* Points Card */}
                 <div className="border border-[#DEDEDE] bg-white rounded-xl p-4">
                     <div className="flex items-center gap-2" style={{ color: "#62a63f" }}>
@@ -75,7 +75,13 @@ export default function HomePage() {
                         </p>
 
                         <div>
-                            <button className="flex items-center gap-1 cursor-pointer">
+                            <button 
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    router.push('/transaction-history');
+                                }}
+                                className="flex items-center gap-1 cursor-pointer"
+                            >
                                 <span className="text-xs text-gray-500">History</span>
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -124,7 +130,13 @@ export default function HomePage() {
                     Earn more points
                 </button>
 
-                <button className="w-full bg-white border border-[#DEDEDE] rounded-xl p-3 flex items-center gap-2 text-[13px] font-medium cursor-pointer">
+                <button 
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        router.push('/redeem-rewards');
+                    }}
+                    className="w-full bg-white border border-[#DEDEDE] rounded-xl p-3 flex items-center gap-2 text-[13px] font-medium cursor-pointer"
+                >
                     <span>
                         <svg
                             xmlns="http://www.w3.org/2000/svg"

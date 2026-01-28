@@ -69,3 +69,78 @@ body {
   inset: 0;
   box-shadow: inset .0625rem 0 0 0 #00000021, inset -.0625rem 0 0 0 #00000021, inset 0 -.0625rem 0 0 #0000002b, inset 0 .0625rem 0 0 #cccccc80;
 }
+
+.custom-btn {
+  background: #3f3f3f;
+  box-shadow: inset 0 1px 0 0 #000, inset 0 0 0 1px #000, inset -2px 0 0 0 hsla(0, 0%, 100%, .2), inset 2px 0 0 0 hsla(0, 0%, 100%, .2), inset 1px 2px 0 0 hsla(0, 0%, 100%, .2);
+  font-size: 13px;
+  min-width: auto;
+  cursor: pointer;
+}
+
+.danger-btn {
+  background: #c70a24;
+  box-shadow: 0px -1.5px 0px rgba(0, 0, 0, 0.25) inset, 1px 0px 0px rgba(255, 255, 255, 0.2) inset, -1px 0px 0px rgba(255, 255, 255, 0.2) inset, 0px 1px 0px rgba(255, 255, 255, 0.48) inset;
+  font-size: 13px;
+  min-width: auto;
+}
+
+.custom-btn {
+  border-radius: 8px;
+  height: 34px;
+  color: #fff;
+  padding: 5px 12px;
+  font-weight: 500;
+}
+
+.custom-btn-default {
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: inset 0 -.0625rem 0 0 #b5b5b5, inset 0 0 0 .0625rem rgba(0, 0, 0, .1), inset 0 .03125rem 0 .09375rem #fff;
+  height: 34px;
+  padding: 4px 12px;
+  font-weight: 500;
+  font-size: 13px;
+  color: #303030;
+}
+
+.custom-btn-default:hover {
+  background: #fafafa;
+}
+
+.datepicker-area .react-datepicker-wrapper {
+  width: 100%;
+}
+
+.datepicker-area .react-datepicker__header .react-datepicker__current-month {
+  margin-bottom: 6px;
+}
+
+.custom-btn.disable {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.custom-dropi select {
+  appearance: none;
+  background: #fdfdfd;
+  border: 1px solid #8a8a8a;
+  border-radius: 8px;
+  padding: 6px 8px 6px 12px;
+  font-size: 13px;
+  position: relative;
+}
+
+.custom-dropi:before {
+  content: "";
+  pointer-events: none;
+  color: #616161;
+  z-index: 10;
+  background: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") center / 16px no-repeat;
+  width: 1em;
+  height: 1em;
+  position: absolute;
+  top: 50%;
+  right: 1rem;
+  transform: translateY(50%);
+}

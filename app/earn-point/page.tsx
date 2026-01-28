@@ -7,11 +7,15 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
 import Image from 'next/image';
 import CelebrateBirthdayPage from './celebrate-birthday/page';
+import CompleteProfilePage from './complete-profile/page';
+import SubscribeNewsletterPage from './subscribe-newsletter/page';
 
     
 export default function EarnPointPage() {
     const router = useRouter();
     const [showCelebrateBirthday, setShowCelebrateBirthday] = useState(false);
+    const [showCompleteProfile, setShowCompleteProfile] = useState(false);
+    const [showSubscribeNewsletter, setShowSubscribeNewsletter] = useState(false);
     const header = (
         <div
             className="text-white p-4 relative rounded-t-2xl"
@@ -41,10 +45,18 @@ export default function EarnPointPage() {
         return <CelebrateBirthdayPage onBack={() => setShowCelebrateBirthday(false)} />;
     }
 
+    if (showCompleteProfile) {
+        return <CompleteProfilePage onBack={() => setShowCompleteProfile(false)} />;
+    }
+
+    if (showSubscribeNewsletter) {
+        return <SubscribeNewsletterPage onBack={() => setShowSubscribeNewsletter(false)} />;
+    }
+
     return (
         <WidgetWrapper header={header}>
             {/* Body */}
-            <div className="p-4 relative z-10 h-[calc(100vh-205px)] overflow-y-auto custom-scroller">
+            <div className="p-4 relative z-10 h-[calc(100%-82px)] overflow-y-auto custom-scroller">
                 <motion.div
                     initial={{ x: 100, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
@@ -79,7 +91,13 @@ export default function EarnPointPage() {
                         </div>
                     </div>
 
-                    <div className="border border-[#DEDEDE] bg-white rounded-xl p-4 flex items-center gap-3 justify-between hover:shadow-sm transition-all duration-300 cursor-pointer">
+                    <div 
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setShowCompleteProfile(true);
+                        }}
+                        className="border border-[#DEDEDE] bg-white rounded-xl p-4 flex items-center gap-3 justify-between hover:shadow-sm transition-all duration-300 cursor-pointer"
+                    >
                         <div className='flex items-center gap-3'>
                             <div className='w-[40px] h-[40px] bg-linear-to-br from-green-50 to-emerald-50 rounded-lg flex items-center justify-center'>
                                 <Image src={`${process.env.NEXT_PUBLIC_BASE_PATH}/images/complete-profile-icon.svg`} alt="Complete Profile" width={30} height={30} className='min-w-[30px] min-h-[30px]' />
@@ -100,7 +118,13 @@ export default function EarnPointPage() {
                         </div>
                     </div>
 
-                    <div className="border border-[#DEDEDE] bg-white rounded-xl p-4 flex items-center gap-3 justify-between hover:shadow-sm transition-all duration-300 cursor-pointer">
+                    <div 
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setShowSubscribeNewsletter(true);
+                        }}
+                        className="border border-[#DEDEDE] bg-white rounded-xl p-4 flex items-center gap-3 justify-between hover:shadow-sm transition-all duration-300 cursor-pointer"
+                    >
                         <div className='flex items-center gap-3'>
                             <div className='w-[40px] h-[40px] bg-linear-to-br from-green-50 to-emerald-50 rounded-lg flex items-center justify-center'>
                                 <Image src={`${process.env.NEXT_PUBLIC_BASE_PATH}/images/subscribe-newsletter-icon.svg`} alt="subscribe newsletter" width={30} height={30} className='min-w-[30px] min-h-[30px]' />

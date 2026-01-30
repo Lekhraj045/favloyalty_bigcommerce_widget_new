@@ -8,7 +8,7 @@
   console.log("FavLoyalty widget loaded");
   // Configuration
   const DEFAULT_CONFIG = {
-    widgetUrl: "https://ddc7aee02935.ngrok-free.app/", // Update with your deployed widget URL
+    widgetUrl: "https://d796b1f0267c.ngrok-free.app/", // Update with your deployed widget URL
     position: "bottom-right",
     apiUrl: "https://favbigcommerce.share.zrok.io", // Your backend API URL
     storeId: "",

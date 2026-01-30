@@ -140,7 +140,7 @@ export default function TransactionHistoryPage() {
                             Recent Transactions
                         </h3>
 
-                        <div className="space-y-3 h-[calc(100vh-270px)] overflow-y-auto custom-scroller">
+                        <div className="space-y-3 h-[calc(100vh-286px)] overflow-y-auto custom-scroller">
                             {transactions.map((tx) => (
                                 <div
                                     key={tx.id}

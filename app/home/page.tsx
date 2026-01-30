@@ -41,7 +41,7 @@ export default function HomePage() {
                     </svg>
                 </button>
 
-                <h3 className="text-lg font-semibold">Welcome</h3>
+                <h3 className="text-lg font-semibold">Welcomess</h3>
 
                 <div className="flex items-center gap-2 mt-1">
                     <span className="text-sm whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px] text-white">
@@ -57,7 +57,7 @@ export default function HomePage() {
             </div>
 
             {/* Body */}
-            <div className="px-4 pb-4 space-y-4 -mt-5 relative z-10 h-[calc(100%-73px)] overflow-y-auto custom-scroller">
+            <div className="px-4 pb-4 space-y-4 -mt-5 relative z-10 h-[calc(100vh-68px)] overflow-y-auto custom-scroller">
                 {/* Points Card */}
                 <div className="border border-[#DEDEDE] bg-white rounded-xl p-4">
                     <div className="flex items-center gap-2" style={{ color: "#62a63f" }}>

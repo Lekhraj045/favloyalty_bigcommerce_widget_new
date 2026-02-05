@@ -1,15 +1,18 @@
 "use client";
 
-import React from 'react'
-import WidgetWrapper from '@/components/WidgetWrapper'
-import { ArrowLeft } from 'lucide-react';
-import { motion } from 'motion/react';
+import React from "react";
+import WidgetWrapper from "@/components/WidgetWrapper";
+import { useWidgetTheme } from "@/contexts/WidgetThemeContext";
+import { ArrowLeft } from "lucide-react";
+import { motion } from "motion/react";
 
 export default function EarnPointPage() {
-    const header = (
+  const theme = useWidgetTheme();
+  const headerStyle = getHeaderStyle(theme);
+  const header = (
         <div
             className="text-white p-4 relative rounded-t-2xl"
-            style={{ backgroundColor: "#62a63f" }}
+            style={headerStyle}
         >
             <div className='flex gap-2'>
                 <div className='mt-[5px]'>

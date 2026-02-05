@@ -11,8 +11,9 @@ interface DatepickerBirthdayProps {
 
 export default function DatepickerBirthday({ selectedDate, onDateChange }: DatepickerBirthdayProps) {
   
-  // Set min and max dates for birthday (e.g., 100 years ago to today)
-  const maxDate = new Date();
+  // Set min and max dates for birthday: up to last year only (current year cannot be birth year)
+  const now = new Date();
+  const maxDate = new Date(now.getFullYear() - 1, 11, 31); // Dec 31 of previous year
   const minDate = new Date();
   minDate.setFullYear(minDate.getFullYear() - 100);
 

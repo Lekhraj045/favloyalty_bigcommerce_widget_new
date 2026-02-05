@@ -1,13 +1,16 @@
 "use client";
 
+import { useWidgetTheme } from "@/contexts/WidgetThemeContext";
+
 export default function LauncherButton({ toggleWidget }: { toggleWidget: () => void }) {
-    return (
+  const theme = useWidgetTheme();
+  return (
         <>
             {/* Launcher Button - Icon Only */}
             <div className="fixed bottom-4 right-4">
                 <div
                     className="w-[60px] h-[60px] rounded-full flex items-center justify-center cursor-pointer"
-                    style={{ backgroundColor: "#62a63f" }}
+                    style={{ backgroundColor: theme.iconColor }}
                     onClick={toggleWidget}
                 >
                     <svg

@@ -1,116 +1,52 @@
 "use client";
 
-import React, { useState } from 'react';
-import Image from 'next/image';
-import { Copy, ExternalLink, ChevronUp, ChevronDown } from 'lucide-react';
+import { Copy } from "lucide-react";
+import Image from "next/image";
+import { useCallback, useEffect, useState } from "react";
 
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
 
-type AppliedProduct = {
-  image: string;
-  name: string;
-  url: string;
+type WidgetConfig = {
+  apiUrl?: string;
+  channelId?: string;
+  storeHash?: string;
+  customerId?: string | number;
 };
 
+function getConfig(): WidgetConfig {
+  if (typeof window === "undefined") return {};
+  return (
+    (window as unknown as { FavLoyaltyWidgetConfig?: WidgetConfig })
+      .FavLoyaltyWidgetConfig ?? {}
+  );
+}
+
 type CouponItem = {
-  id: number;
+  id: string;
   offer: string;
   expires: string;
   code: string;
-  image: string;
-  // Admin can set these on any coupon from store
-  minimumPurchaseRequired?: string;
-  productImage?: string;
-  productName?: string;
-  productUrl?: string;
-  appliesToProducts?: AppliedProduct[]; // accordion "Applies to X selected product(s)"
+  expiresAt: string | null;
+  used?: boolean;
+  appliesToProducts?: {
+    id?: string;
+    name: string;
+    imgUrl?: string | null;
+    url?: string | null;
+  }[];
 };
 
-const coupons: CouponItem[] = [
-  {
-    id: 1,
-    offer: '50% off',
-    expires: 'Expires: Never',
-    code: 'JYXXPP14AW',
-    image: `${basePath}/images/get-fixed-discount.svg`,
-    appliesToProducts: [
-      {
-        image: `${basePath}/images/product2.jpg`,
-        name: 'The Inventory Not Tracked Snowboard - Default Title',
-        url: '#',
-      },
-      {
-        image: `${basePath}/images/product1.jpg`,
-        name: 'The 3p Fulfilled Snowboard - Default Title',
-        url: '#',
-      },
-      {
-        image: `${basePath}/images/product2.jpg`,
-        name: 'The Collection Snowboard: Hydrogen',
-        url: '#',
-      },
-    ],
-  },
-  {
-    id: 2,
-    offer: '$20 OFF',
-    expires: '18th September 2026',
-    code: 'TECH20SAVE',
-    image: `${basePath}/images/flat-discount.svg`,
-  },
-  {
-    id: 3,
-    offer: 'Free Shipping',
-    expires: 'Expires: Never',
-    code: 'GOURMETFREE',
-    image: `${basePath}/images/free-shipping.svg`,
-    minimumPurchaseRequired: 'INR 0.1',
-  },
-  {
-    id: 4,
-    offer: 'Free Product',
-    expires: '9th February 2026',
-    code: '1BI6IQ9LDI',
-    image: `${basePath}/images/free-product.svg`,
-    productImage: `${basePath}/images/product1.jpg`,
-    productName: 'The 3p Fulfilled Snowboard - Default Title',
-    productUrl: '#',
-  },
-  // Same types, no restrictions (admin has not set any on these)
-  {
-    id: 5,
-    offer: 'Free Shipping',
-    expires: 'Expires: Never',
-    code: 'FREESHIPNO',
-    image: `${basePath}/images/free-shipping.svg`,
-  },
-  {
-    id: 6,
-    offer: 'Free Product',
-    expires: 'Expires: Never',
-    code: 'FREEPRODNO',
-    image: `${basePath}/images/free-product.svg`,
-  },
-  {
-    id: 7,
-    offer: '50% off',
-    expires: 'Expires: Never',
-    code: 'FIXED50NO',
-    image: `${basePath}/images/get-fixed-discount.svg`,
-  },
-];
-
 function fallbackCopyText(text: string): boolean {
-  const textarea = document.createElement('textarea');
+  const textarea = document.createElement("textarea");
   textarea.value = text;
-  textarea.style.position = 'fixed';
-  textarea.style.left = '-9999px';
-  textarea.style.top = '0';
+  textarea.style.position = "fixed";
+  textarea.style.left = "-9999px";
+  textarea.style.top = "0";
   document.body.appendChild(textarea);
   textarea.focus();
   textarea.select();
   try {
-    const ok = document.execCommand('copy');
+    const ok = document.execCommand("copy");
     document.body.removeChild(textarea);
     return ok;
   } catch {
@@ -119,8 +55,11 @@ function fallbackCopyText(text: string): boolean {
   }
 }
 
-async function copyToClipboard(text: string, onSuccess: () => void): Promise<void> {
-  if (typeof window === 'undefined') return;
+async function copyToClipboard(
+  text: string,
+  onSuccess: () => void
+): Promise<void> {
+  if (typeof window === "undefined") return;
   try {
     if (navigator.clipboard?.writeText) {
       await navigator.clipboard.writeText(text);
@@ -134,192 +73,248 @@ async function copyToClipboard(text: string, onSuccess: () => void): Promise<voi
 }
 
 export default function CouponsPage() {
-  const [copiedId, setCopiedId] = useState<number | null>(null);
-  const [expandedAccordionId, setExpandedAccordionId] = useState<number | null>(1);
+  const [config, setConfig] = useState<WidgetConfig>(() => getConfig());
+  const [coupons, setCoupons] = useState<CouponItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  const handleCopy = (code: string, id: number) => {
+  useEffect(() => {
+    setConfig(getConfig());
+    const onMessage = (event: MessageEvent) => {
+      const data = event.data;
+      if (data?.type === "fav-loyalty-customer") {
+        setConfig((prev) => ({
+          ...prev,
+          customerId:
+            (data as { customerId?: string }).customerId ?? prev.customerId,
+        }));
+      }
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, []);
+
+  const fetchMyCoupons = useCallback(async () => {
+    const apiUrl = config?.apiUrl?.replace(/\/$/, "");
+    const storeHash = config?.storeHash;
+    const channelId = config?.channelId;
+    const customerId = config?.customerId;
+    if (!apiUrl || !storeHash || !channelId) {
+      setCoupons([]);
+      setLoading(false);
+      return;
+    }
+    if (customerId == null || String(customerId).trim() === "") {
+      setCoupons([]);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const params = new URLSearchParams({
+        storeHash: String(storeHash),
+        channelId: String(channelId),
+        customerId: String(customerId).trim(),
+      });
+      const url = `${apiUrl}/api/widget/my-coupons?${params.toString()}`;
+      const res = await fetch(url, { method: "GET" });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(
+          body?.message || `Failed to load coupons (${res.status})`
+        );
+      }
+      const data = await res.json();
+      setCoupons(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load coupons");
+      setCoupons([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [
+    config?.apiUrl,
+    config?.storeHash,
+    config?.channelId,
+    config?.customerId,
+  ]);
+
+  useEffect(() => {
+    fetchMyCoupons();
+  }, [fetchMyCoupons]);
+
+  const handleCopy = (code: string, id: string) => {
     copyToClipboard(code, () => {
       setCopiedId(id);
       setTimeout(() => setCopiedId(null), 2000);
     });
   };
 
+  if (loading) {
+    return (
+      <div className="p-4 h-[calc(100vh-130px)] overflow-y-auto custom-scroller flex items-center justify-center">
+        <p className="text-sm text-[#616161]">Loading your coupons…</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 h-[calc(100vh-130px)] overflow-y-auto custom-scroller flex flex-col gap-4 items-center justify-center">
+        <p className="text-sm text-red-600">{error}</p>
+      </div>
+    );
+  }
+
+  if (coupons.length === 0) {
+    return (
+      <div className="p-4 h-[calc(100vh-130px)] overflow-y-auto custom-scroller flex flex-col gap-4">
+        <p className="text-sm text-[#616161] text-center">
+          You don&apos;t have any redeemed coupons yet. Redeem points from
+          Rewards to get coupon codes here.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 h-[calc(100vh-130px)] overflow-y-auto custom-scroller">
       <div className="flex flex-col gap-4">
-        {coupons.map((coupon) => (
-          <div
-            key={coupon.id}
-            className={`card flex flex-col gap-4`}
-          >
-            {/* Top section: image, offer, description, ACTIVE badge */}
-            <div className="flex items-start justify-between gap-1">
-              <div className="flex items-start gap-3 min-w-0">
-                <div
-                  className={`w-[40px] h-[40px] min-w-[40px] min-h-[40px] rounded-lg flex items-center justify-center overflow-hidden bg-linear-to-br from-green-50 to-emerald-50 `}
-                >
-                  <Image
-                    src={coupon.image}
-                    alt={coupon.offer}
-                    width={30}
-                    height={30}
-                    className="min-w-[30px] min-h-[30px] object-contain"
-                  />
-                </div>
-                <div className="min-w-0">
-                  <h3 className="text-base font-medium text-[#303030] leading-tight">
-                    {coupon.offer}
-                  </h3>
-                  <p className="text-[13px] text-[#616161] mt-0.5">
-                    {coupon.expires}
-                  </p>
-                </div>
-              </div>
-              <span className="shrink-0 text-xs text-[#16a34a] bg-[#dcfce7] px-2.5 py-1 rounded-full">
-                Available
-              </span>
-            </div>
-
-            {/* Accordion "Applies to X selected product(s)" – show when admin has set products */}
-            {coupon.appliesToProducts && coupon.appliesToProducts.length > 0 && (
-              <div className="rounded-lg border border-[#93c5fd] bg-[#eff6ff]/50 overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setExpandedAccordionId((prev) =>
-                      prev === coupon.id ? null : coupon.id
-                    )
-                  }
-                  className="w-full px-3 py-2.5 flex items-center justify-between gap-2 text-left hover:bg-[#dbeafe]/50 transition-colors"
-                >
-                  <span className="text-[13px] font-medium text-[#303030]">
-                    Applies to {coupon.appliesToProducts.length} selected product
-                    {coupon.appliesToProducts.length !== 1 ? 's' : ''}
-                  </span>
-                  {expandedAccordionId === coupon.id ? (
-                    <ChevronUp size={18} className="shrink-0 text-[#616161]" />
-                  ) : (
-                    <ChevronDown size={18} className="shrink-0 text-[#616161]" />
-                  )}
-                </button>
-                {expandedAccordionId === coupon.id && (
-                  <div className="border-t border-[#93c5fd] p-3 flex flex-col gap-2 custom-scroller max-h-[150px] overflow-y-auto">
-                    {coupon.appliesToProducts.map((product, idx) => (
-                      <div
-                        key={idx}
-                        className="flex items-center gap-3 p-2 rounded-lg bg-white border border-[#e5e5e5]"
-                      >
-                        <div className="w-10 h-10 min-w-10 min-h-10 rounded-lg overflow-hidden bg-[#f5f5f5] shrink-0">
-                          <Image
-                            src={product.image}
-                            alt={product.name}
-                            width={40}
-                            height={40}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-[13px] font-medium text-[#303030] leading-snug truncate">
-                            {product.name}
-                          </p>
-                          <a
-                            href={product.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 mt-0.5 text-[13px] font-medium text-[#2563eb] hover:underline"
-                          >
-                            View
-                            <ExternalLink size={12} className="shrink-0" />
-                          </a>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Minimum Purchase Required – show when admin has set it on this coupon */}
-            {coupon.minimumPurchaseRequired && (
-              <div className="rounded-lg bg-[#f3e8ff] px-3 py-2 flex items-center justify-between gap-2">
-                <span className="text-[13px] font-normal text-[#303030]">
-                  Minimum Purchase Required:
-                </span>
-                <span className="text-[13px] font-medium text-[#7c3aed]">
-                  {coupon.minimumPurchaseRequired}
-                </span>
-              </div>
-            )}
-
-            {/* Product details – show when admin has set product on this coupon */}
-            {(coupon.productImage ?? coupon.productName ?? coupon.productUrl) && (
-              <div className="rounded-lg bg-[#fff7ed] border border-[#fed7aa]/50 p-3 flex items-start gap-3">
-                {coupon.productImage && (
-                  <div className="w-[56px] h-[56px] min-w-[56px] min-h-[56px] rounded-lg overflow-hidden bg-[#f5f5f5] shrink-0">
+        {coupons.map((coupon) => {
+          const isUsed = coupon.used === true;
+          const hasProducts =
+            Array.isArray(coupon.appliesToProducts) &&
+            coupon.appliesToProducts.length > 0;
+          const firstProduct = hasProducts
+            ? coupon.appliesToProducts![0]
+            : null;
+          return (
+            <div
+              key={coupon.id}
+              className={`card flex flex-col gap-4 ${
+                isUsed ? "opacity-75" : ""
+              }`}
+            >
+              {/* Top section: image, offer, description, badge (Available / Used) */}
+              <div className="flex items-start justify-between gap-1">
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className="w-[40px] h-[40px] min-w-[40px] min-h-[40px] rounded-lg flex items-center justify-center overflow-hidden bg-linear-to-br from-green-50 to-emerald-50">
                     <Image
-                      src={coupon.productImage}
-                      alt={coupon.productName ?? 'Product'}
-                      width={56}
-                      height={56}
-                      className="w-full h-full object-cover"
+                      src={`${basePath}/images/flat-discount.svg`}
+                      alt={coupon.offer}
+                      width={30}
+                      height={30}
+                      className="min-w-[30px] min-h-[30px] object-contain"
                     />
                   </div>
-                )}
-                <div className="min-w-0 flex-1">
-                  {coupon.productName && (
-                    <p className="text-[13px] font-medium text-[#303030] leading-snug">
-                      {coupon.productName}
+                  <div className="min-w-0">
+                    <h3 className="text-base font-medium text-[#303030] leading-tight">
+                      {coupon.offer}
+                    </h3>
+                    <p className="text-[13px] text-[#616161] mt-0.5">
+                      {coupon.expires}
                     </p>
-                  )}
-                  {coupon.productUrl && (
-                    <a
-                      href={coupon.productUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 mt-1.5 text-[13px] font-medium text-[#ea580c] hover:underline"
-                    >
-                      View Product
-                      <ExternalLink size={14} className="shrink-0" />
-                    </a>
-                  )}
+                  </div>
                 </div>
-              </div>
-            )}
-
-            {/* Dotted separator */}
-            <div className="border-t border-dashed border-[#d4d4d4]" />
-
-            {/* Bottom section: coupon code + Use Now */}
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2 min-w-0">
-                <div className="border border-dashed border-[#a3a3a3] rounded-lg bg-[#f5f5f5] px-3 py-2 flex items-center gap-2">
-                  <span className="text-[13px] font-medium text-[#303030] truncate">
-                    {coupon.code}
+                {isUsed ? (
+                  <span className="shrink-0 text-xs text-[#737373] bg-[#e5e5e5] px-2.5 py-1 rounded-full">
+                    Used
                   </span>
-                  <button
-                    type="button"
-                    onClick={() => handleCopy(coupon.code, coupon.id)}
-                    className="shrink-0 p-0.5 rounded text-[#737373] hover:text-[#303030] hover:bg-[#e5e5e5] transition-colors"
-                    aria-label="Copy code"
-                  >
-                    <Copy size={16} />
-                  </button>
-                </div>
-                {copiedId === coupon.id && (
-                  <span className="text-xs text-[#16a34a] font-medium">
-                    Copied!
+                ) : (
+                  <span className="shrink-0 text-xs text-[#16a34a] bg-[#dcfce7] px-2.5 py-1 rounded-full">
+                    Available
                   </span>
                 )}
               </div>
-              <button
-                type="button"
-                className="custom-btn"
-              >
-                Apply Now
-              </button>
+
+              {/* Applies to products (if any restriction) */}
+              {hasProducts && firstProduct && (
+                <div className="mt-1 rounded-lg bg-[#f5f5f5] px-3 py-2 flex flex-col gap-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-[13px] font-medium text-[#404040]">
+                      Applies to {coupon.appliesToProducts!.length} selected{" "}
+                      {coupon.appliesToProducts!.length === 1
+                        ? "product"
+                        : "products"}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-md overflow-hidden bg-[#e5e5e5] flex items-center justify-center">
+                      {firstProduct.imgUrl ? (
+                        <img
+                          src={firstProduct.imgUrl}
+                          alt={firstProduct.name}
+                          width={40}
+                          height={40}
+                          className="object-cover w-full h-full"
+                        />
+                      ) : (
+                        <span className="text-xs text-[#737373]">Image</span>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] text-[#303030] font-medium truncate">
+                        {firstProduct.name}
+                      </p>
+                      {firstProduct.url && (
+                        <a
+                          href={firstProduct.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[12px] text-[#2563eb] hover:underline"
+                        >
+                          View
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Dotted separator */}
+              <div className="border-t border-dashed border-[#d4d4d4]" />
+
+              {/* Bottom section: coupon code + Apply Now (disabled when used) */}
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="border border-dashed border-[#a3a3a3] rounded-lg bg-[#f5f5f5] px-3 py-2 flex items-center gap-2">
+                    <span className="text-[13px] font-medium text-[#303030] truncate">
+                      {coupon.code}
+                    </span>
+                    {!isUsed && (
+                      <button
+                        type="button"
+                        onClick={() => handleCopy(coupon.code, coupon.id)}
+                        className="shrink-0 p-0.5 rounded text-[#737373] hover:text-[#303030] hover:bg-[#e5e5e5] transition-colors"
+                        aria-label="Copy code"
+                      >
+                        <Copy size={16} />
+                      </button>
+                    )}
+                  </div>
+                  {!isUsed && copiedId === coupon.id && (
+                    <span className="text-xs text-[#16a34a] font-medium">
+                      Copied!
+                    </span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  className="custom-btn"
+                  disabled={isUsed}
+                  aria-disabled={isUsed}
+                  style={
+                    isUsed ? { opacity: 0.6, cursor: "not-allowed" } : undefined
+                  }
+                >
+                  Apply Now
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

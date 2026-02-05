@@ -19,6 +19,16 @@ export default function WidgetContainer({
   const embedded = isEmbeddedWidget();
   if (!embedded && !isOpen) return null;
 
+  const handleClose = () => {
+    if (embedded) {
+      try {
+        window.parent.postMessage({ type: "fav-loyalty-widget-close" }, "*");
+      } catch (_) {}
+    } else {
+      toggleWidget();
+    }
+  };
+
   return (
     <div>
       <div
@@ -33,8 +43,10 @@ export default function WidgetContainer({
             <div className="relative">
               {header}
               <button
+                type="button"
                 className="absolute right-4 top-4 text-white text-medium cursor-pointer z-10"
-                onClick={embedded ? undefined : toggleWidget}
+                onClick={handleClose}
+                aria-label="Close widget"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

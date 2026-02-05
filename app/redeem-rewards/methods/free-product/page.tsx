@@ -24,12 +24,24 @@ function getConfig(): WidgetConfig {
   );
 }
 
+type RestrictionItem = {
+  value?: string;
+  imgUrl?: string;
+  pointRequired?: string;
+};
+
 type RedeemCoupon = {
   _id?: string;
   coupon?: {
     active?: boolean;
     value?: number;
     name?: string;
+    restriction?: {
+      selectedItems?: {
+        status?: boolean;
+        items?: RestrictionItem[];
+      };
+    };
   };
 };
 
@@ -69,7 +81,7 @@ async function copyToClipboard(
   if (fallbackCopyText(text)) onSuccess();
 }
 
-export default function FreeShippingPage() {
+export default function FreeProductPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const couponId = searchParams.get("couponId") ?? "";
@@ -203,7 +215,7 @@ export default function FreeShippingPage() {
       }
       setResult({
         couponCode: data.couponCode ?? "",
-        offerLabel: data.offerLabel ?? "Free Shipping",
+        offerLabel: data.offerLabel ?? "Get Free Products",
         expiresAt: data.expiresAt ?? null,
       });
       setShowConfirmModal(false);
@@ -226,8 +238,20 @@ export default function FreeShippingPage() {
 
   const theme = useWidgetTheme();
   const headerStyle = getHeaderStyle(theme);
-  const pointsRequired = redeemSetting?.coupon?.value ?? 0;
-  const offerLabel = redeemSetting?.coupon?.name ?? "Get Free Shipping";
+  const offerLabel = redeemSetting?.coupon?.name ?? "Get Free Products";
+  // Points: use coupon.value (set from product points in admin), else derive from selected items
+  const pointsRequired = (() => {
+    const v = redeemSetting?.coupon?.value;
+    if (v != null && v > 0) return Number(v);
+    const items =
+      redeemSetting?.coupon?.restriction?.selectedItems?.items ?? [];
+    const pts = items
+      .map((i) => parseInt(String(i.pointRequired ?? "0"), 10))
+      .filter((n) => !isNaN(n) && n > 0);
+    return pts.length ? Math.min(...pts) : 0;
+  })();
+  const restrictionItems =
+    redeemSetting?.coupon?.restriction?.selectedItems?.items ?? [];
 
   const header = (
     <div className="text-white p-4 relative rounded-t-2xl" style={headerStyle}>
@@ -245,7 +269,7 @@ export default function FreeShippingPage() {
           <h3 className="text-lg font-semibold">{offerLabel}</h3>
           <div className="flex items-center gap-2 mt-1">
             <span className="text-sm whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px] text-white">
-              Coupon Code
+              Free Product
             </span>
           </div>
         </div>
@@ -290,7 +314,7 @@ export default function FreeShippingPage() {
           transition={{ duration: 0.3, ease: "easeOut" }}
           className="flex flex-col gap-4"
         >
-          {/* Confirm Free Shipping Discount Modal */}
+          {/* Confirm Free Product Modal */}
           {showConfirmModal &&
             typeof document !== "undefined" &&
             createPortal(
@@ -303,11 +327,11 @@ export default function FreeShippingPage() {
                 <div className="bg-white rounded-2xl shadow-xl max-w-md w-full overflow-hidden">
                   <div className="p-4">
                     <h3 className="text-base font-bold text-[#303030]">
-                      Confirm Free Shipping Discount
+                      Confirm Free Product
                     </h3>
                     <p className="text-sm text-[#616161] mt-2">
-                      Are you sure you want to create a free shipping discount
-                      coupon?
+                      Are you sure you want to redeem points for this free
+                      product reward?
                     </p>
                     <p className="text-sm text-[#303030] mt-3">
                       Points to be deducted:{" "}
@@ -315,6 +339,37 @@ export default function FreeShippingPage() {
                         {pointsRequired}
                       </span>
                     </p>
+                    {restrictionItems.length > 0 && (
+                      <div className="mt-3">
+                        <p className="text-xs font-medium text-[#616161] mb-2">
+                          Applies to:
+                        </p>
+                        <ul className="text-sm text-[#303030] space-y-1 max-h-24 overflow-y-auto">
+                          {restrictionItems.map((item, idx) => (
+                            <li key={idx} className="flex items-center gap-2">
+                              {item.imgUrl ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={item.imgUrl}
+                                  alt={item.value ?? "Product"}
+                                  width={24}
+                                  height={24}
+                                  className="rounded object-cover shrink-0"
+                                />
+                              ) : (
+                                <div className="w-6 h-6 rounded bg-[#f0f0f0] shrink-0" />
+                              )}
+                              <span className="truncate">
+                                {item.value ?? "Product"}
+                                {item.pointRequired
+                                  ? ` (${item.pointRequired} pts)`
+                                  : ""}
+                              </span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
                     {redeemError && (
                       <p className="text-sm text-red-600 mt-2">{redeemError}</p>
                     )}
@@ -334,7 +389,7 @@ export default function FreeShippingPage() {
                       className="flex-1 py-2.5 rounded-lg text-sm font-medium bg-[#14b8a6] text-white hover:bg-[#0d9488] transition-colors disabled:opacity-50"
                       disabled={redeeming}
                     >
-                      {redeeming ? "Creating…" : "Confirm"}
+                      {redeeming ? "Redeeming…" : "Confirm"}
                     </button>
                   </div>
                 </div>
@@ -351,7 +406,7 @@ export default function FreeShippingPage() {
                     {result.offerLabel}
                   </h3>
                   <p className="text-[13px] text-[#616161] mt-0.5 uppercase">
-                    Applicable on whole order
+                    Free product coupon
                   </p>
                 </div>
                 <div className="border-t border-dashed border-[#d4d4d4] w-full" />

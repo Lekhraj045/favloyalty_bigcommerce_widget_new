@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Roboto  } from "next/font/google";
 import "./globals.css";
 import { WidgetProvider } from "@/contexts/WidgetContext";
+import { WidgetThemeProvider } from "@/contexts/WidgetThemeContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,7 +35,9 @@ export default function RootLayout({
           className={`${geistSans.variable} ${geistMono.variable} ${roboto.className} antialiased`}
       >
         <WidgetProvider>
-          {children}
+          <WidgetThemeProvider>
+            {children}
+          </WidgetThemeProvider>
         </WidgetProvider>
       </body>
     </html>

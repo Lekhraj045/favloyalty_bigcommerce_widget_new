@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
 import WidgetWrapper from "@/components/WidgetWrapper";
+import { getHeaderStyle, useWidgetTheme } from "@/contexts/WidgetThemeContext";
 import { ArrowLeft } from "lucide-react";
 import { motion } from "motion/react";
 import { useRouter } from "next/navigation";
@@ -9,12 +9,10 @@ import PointCoupon from "../components/PointCoupon";
 
 export default function PointCouponPage() {
   const router = useRouter();
-
+  const theme = useWidgetTheme();
+  const headerStyle = getHeaderStyle(theme);
   const header = (
-    <div
-      className="text-white p-4 relative rounded-t-2xl"
-      style={{ backgroundColor: "#62a63f" }}
-    >
+    <div className="text-white p-4 relative rounded-t-2xl" style={headerStyle}>
       <div className="flex gap-2">
         <div className="mt-[5px]">
           <button

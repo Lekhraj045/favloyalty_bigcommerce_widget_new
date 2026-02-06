@@ -238,7 +238,7 @@ export default function HomePage({ config }: { config?: WidgetConfig }) {
         if (data.pointsUnit != null && typeof data.pointsUnit === "string")
           setPointsUnit(data.pointsUnit);
       })
-      .catch(() => {});
+      .catch(() => { });
     return () => {
       cancelled = true;
     };
@@ -292,7 +292,7 @@ export default function HomePage({ config }: { config?: WidgetConfig }) {
       if (data.success) {
         setReferSuccess(
           data.message ||
-            "Referral sent! You'll earn points after your friend's first order."
+          "Referral sent! You'll earn points after your friend's first order."
         );
         setReferEmail("");
       } else {
@@ -313,7 +313,7 @@ export default function HomePage({ config }: { config?: WidgetConfig }) {
     if (isEmbeddedWidget()) {
       try {
         window.parent.postMessage({ type: "fav-loyalty-widget-close" }, "*");
-      } catch (_) {}
+      } catch (_) { }
     } else {
       contextToggleWidget();
     }
@@ -330,13 +330,13 @@ export default function HomePage({ config }: { config?: WidgetConfig }) {
     customerStatus === "loaded" && customerData
       ? customerData.userName
       : customerStatus === "not_in_program" && customerData
-      ? customerData.userName
-      : "";
+        ? customerData.userName
+        : "";
   // Tier badge: tier name + multiplier (e.g. "Gold user 2 x") when tier system is enabled
   const headerTier =
     customerStatus === "loaded" &&
-    customerData?.tierSystemEnabled === true &&
-    customerData?.tierDisplay
+      customerData?.tierSystemEnabled === true &&
+      customerData?.tierDisplay
       ? customerData.tierMultiplier != null && customerData.tierMultiplier > 0
         ? `${customerData.tierDisplay} ${customerData.tierMultiplier} x`
         : customerData.tierDisplay
@@ -371,7 +371,7 @@ export default function HomePage({ config }: { config?: WidgetConfig }) {
           </svg>
         </button>
 
-        <h3 className="text-lg font-semibold">Welcome</h3>
+        <h3 className="text-lg font-semibold">Welcomess</h3>
 
         <div className="flex items-center gap-2 mt-1">
           {customerStatus === "loading" && (
@@ -379,8 +379,8 @@ export default function HomePage({ config }: { config?: WidgetConfig }) {
           )}
           {(customerStatus === "guest" ||
             customerStatus === "not_in_program") && (
-            <span className="text-sm text-white/90">Guest</span>
-          )}
+              <span className="text-sm text-white/90">Guest</span>
+            )}
           {customerStatus === "loaded" && headerName && (
             <>
               <span
@@ -489,50 +489,54 @@ export default function HomePage({ config }: { config?: WidgetConfig }) {
               ? `${storeOrigin}/login.php?action=create_account`
               : "/login.php?action=create_account";
             return (
-              <div className="border border-[#E5E7EB] bg-white rounded-xl p-4 text-center shadow-sm">
-                <h4 className="text-[14px] font-semibold text-gray-800 mb-3 leading-snug">
-                  Sign up now and discover our rewards program
-                </h4>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (typeof window !== "undefined") {
-                      try {
-                        (window.top || window).location.href = createAccountUrl;
-                      } catch {
-                        window.location.href = createAccountUrl;
-                      }
-                    }
-                  }}
-                  className="w-full rounded-lg border-2 bg-white py-2 text-[13px] font-semibold transition-all hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-1 shadow-sm"
-                  style={{
-                    borderColor: theme.headerColor || "#B87333",
-                    color: theme.headerColor || "#B87333",
-                  }}
-                >
-                  Join Now
-                </button>
-                <p className="text-sm mt-3 text-gray-700">
-                  Already a Member?{" "}
-                  <button
-                    type="button"
-                    className="font-semibold underline decoration-2 underline-offset-1 cursor-pointer focus:outline-none hover:opacity-90"
-                    style={{ color: theme.headerColor || "#B87333" }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (typeof window !== "undefined") {
-                        try {
-                          (window.top || window).location.href = loginUrl;
-                        } catch {
-                          window.location.href = loginUrl;
+              <div className="card !p-0">
+                <div className="flex gap-2 items-end">
+                  <div className="px-3">
+                    <Image src={`${process.env.NEXT_PUBLIC_BASE_PATH}/images/join-now.svg`} alt="Points" width={120} height={105} />
+                  </div>
+                  <div className="flex-1 pr-4 py-4">
+                    <h4 className="text-[13px] text-center text-gray-800 mb-3 leading-snug">
+                      Sign up now and discover our rewards program
+                    </h4>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (typeof window !== "undefined") {
+                          try {
+                            (window.top || window).location.href = createAccountUrl;
+                          } catch {
+                            window.location.href = createAccountUrl;
+                          }
                         }
-                      }
-                    }}
-                  >
-                    Log In
-                  </button>
-                </p>
+                      }}
+                      className="custom-btn w-full"
+                    >
+                      Join Now
+                    </button>
+                    <p className="text-[13px] mt-3 text-gray-700 text-center">
+                      Already a Member?{" "}
+                      <button
+                        type="button"
+                        className="font-semibold underline decoration-2 underline-offset-1 cursor-pointer focus:outline-none hover:opacity-90"
+                        style={{ color: theme.headerColor || "#B87333" }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (typeof window !== "undefined") {
+                            try {
+                              (window.top || window).location.href = loginUrl;
+                            } catch {
+                              window.location.href = loginUrl;
+                            }
+                          }
+                        }}
+                      >
+                        Log In
+                      </button>
+                    </p>
+                  </div>
+                </div>
+
               </div>
             );
           })()}
@@ -541,72 +545,72 @@ export default function HomePage({ config }: { config?: WidgetConfig }) {
         {(customerStatus === "loaded" ||
           customerStatus === "guest" ||
           customerStatus === "not_in_program") && (
-          <div
-            className={
-              customerStatus === "loaded"
-                ? ""
-                : "pointer-events-none select-none opacity-60"
-            }
-          >
-            <button
-              type="button"
-              onClick={(e) => {
-                if (customerStatus !== "loaded") return;
-                e.stopPropagation();
-                router.push("/earn-point");
-              }}
-              className="w-full bg-white border border-[#DEDEDE] rounded-xl p-3 flex items-center gap-2 text-[13px] font-medium cursor-pointer disabled:cursor-not-allowed"
+            <div
+              className={
+                customerStatus === "loaded"
+                  ? ""
+                  : "pointer-events-none select-none opacity-60"
+              }
             >
-              <span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <line x1="12" x2="12" y1="2" y2="22" />
-                  <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-                </svg>
-              </span>
-              Earn more points
-            </button>
+              <button
+                type="button"
+                onClick={(e) => {
+                  if (customerStatus !== "loaded") return;
+                  e.stopPropagation();
+                  router.push("/earn-point");
+                }}
+                className="w-full bg-white border border-[#DEDEDE] rounded-xl p-3 flex items-center gap-2 text-[13px] font-medium cursor-pointer disabled:cursor-not-allowed"
+              >
+                <span>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <line x1="12" x2="12" y1="2" y2="22" />
+                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+                  </svg>
+                </span>
+                Earn more points
+              </button>
 
-            <button
-              type="button"
-              onClick={(e) => {
-                if (customerStatus !== "loaded") return;
-                e.stopPropagation();
-                router.push("/redeem-rewards");
-              }}
-              className="w-full bg-white border border-[#DEDEDE] rounded-xl p-3 flex items-center gap-2 text-[13px] font-medium cursor-pointer disabled:cursor-not-allowed mt-3"
-            >
-              <span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <rect x="3" y="8" width="18" height="4" rx="1" />
-                  <path d="M12 8v13" />
-                  <path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7" />
-                  <path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5" />
-                </svg>
-              </span>
-              Redeem points for rewards
-            </button>
-          </div>
-        )}
+              <button
+                type="button"
+                onClick={(e) => {
+                  if (customerStatus !== "loaded") return;
+                  e.stopPropagation();
+                  router.push("/redeem-rewards");
+                }}
+                className="w-full bg-white border border-[#DEDEDE] rounded-xl p-3 flex items-center gap-2 text-[13px] font-medium cursor-pointer disabled:cursor-not-allowed mt-3"
+              >
+                <span>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <rect x="3" y="8" width="18" height="4" rx="1" />
+                    <path d="M12 8v13" />
+                    <path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7" />
+                    <path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5" />
+                  </svg>
+                </span>
+                Redeem points for rewards
+              </button>
+            </div>
+          )}
 
         {/* Refer & Earn card: enabled/disabled from Ways to Earn (channel collect settings) */}
         <div className="border border-[#DEDEDE] bg-white rounded-xl p-3 space-y-2">
@@ -710,15 +714,13 @@ export default function HomePage({ config }: { config?: WidgetConfig }) {
                 !referAndEarnEnabled || customerStatus !== "loaded" || referLoading
               }
               placeholder="Friend's email address"
-              className={`w-full h-8 border rounded-lg px-3 text-[13px] leading-none focus:outline-none bg-[#fdfdfd] ${
-                referError
+              className={`w-full h-8 border rounded-lg px-3 text-[13px] leading-none focus:outline-none bg-[#fdfdfd] ${referError
                   ? "border-red-500"
                   : "border-[#8a8a8a]"
-              } ${
-                !referAndEarnEnabled || customerStatus !== "loaded"
+                } ${!referAndEarnEnabled || customerStatus !== "loaded"
                   ? "cursor-not-allowed opacity-70"
                   : ""
-              }`}
+                }`}
             />
             <button
               type="button"

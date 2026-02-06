@@ -8,7 +8,7 @@
   console.log("FavLoyalty widget loaded");
   // Configuration
   const DEFAULT_CONFIG = {
-    widgetUrl: "https://favloyaltybigcommercewidget.share.zrok.io/", // Update with your deployed widget URL
+    widgetUrl: "https://4ac7-122-160-14-227.ngrok-free.app", // Update with your deployed widget URL
     position: "bottom-right",
     apiUrl: "https://favbigcommerce.share.zrok.io", // Your backend API URL
     storeId: "",
@@ -366,6 +366,7 @@
       display: block;
       overflow: hidden;
       border-radius: 17px;
+      box-shadow: 0 0 80px 0 rgba(0, 0, 0, 0.12);
     `;
     iframe.setAttribute("scrolling", "no");
     iframe.setAttribute("allowtransparency", "true");

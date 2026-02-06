@@ -44,6 +44,11 @@ export default function HomePage({ config }: { config?: WidgetConfig }) {
   const [announcements, setAnnouncements] = useState<AnnouncementItem[]>([]);
   const [pointsLogoSrc, setPointsLogoSrc] = useState<string>("point-icon1.svg");
   const [reopenTrigger, setReopenTrigger] = useState(0);
+  // Refer & Earn card state
+  const [referEmail, setReferEmail] = useState("");
+  const [referLoading, setReferLoading] = useState(false);
+  const [referError, setReferError] = useState<string | null>(null);
+  const [referSuccess, setReferSuccess] = useState<string | null>(null);
   const router = useRouter();
   const { toggleWidget: contextToggleWidget } = useWidget();
 
@@ -246,6 +251,63 @@ export default function HomePage({ config }: { config?: WidgetConfig }) {
   ]);
 
   const headerStyle = getHeaderStyle(theme);
+
+  // Build auth body for widget API (refer, referrals) — same as current-customer
+  const getWidgetAuthBody = () => {
+    const jwt = config?.currentCustomerJwt;
+    const useJwt =
+      jwt &&
+      jwt !== "null" &&
+      jwt !== "undefined" &&
+      typeof jwt === "string";
+    if (useJwt) {
+      return {
+        currentCustomerJwt: jwt,
+        channelId: config?.channelId ?? undefined,
+      };
+    }
+    return {
+      storeHash: config?.storeHash,
+      channelId: config?.channelId ?? undefined,
+      customerId: config?.customerId,
+    };
+  };
+
+  const handleSendReferral = async () => {
+    const apiUrl = config?.apiUrl?.replace(/\/$/, "");
+    const trimmed = referEmail.trim();
+    if (!apiUrl || !trimmed) return;
+    if (customerStatus !== "loaded") return;
+    setReferError(null);
+    setReferSuccess(null);
+    setReferLoading(true);
+    try {
+      const body = { ...getWidgetAuthBody(), referredEmail: trimmed };
+      const res = await fetch(`${apiUrl}/api/widget/refer`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setReferSuccess(
+          data.message ||
+            "Referral sent! You'll earn points after your friend's first order."
+        );
+        setReferEmail("");
+      } else {
+        const msg =
+          data.error === "already_customer"
+            ? data.message || "This person is already a customer on this store."
+            : data.message || "Something went wrong. Please try again.";
+        setReferError(msg);
+      }
+    } catch {
+      setReferError("Something went wrong. Please try again.");
+    } finally {
+      setReferLoading(false);
+    }
+  };
 
   const handleCloseWidget = () => {
     if (isEmbeddedWidget()) {
@@ -606,6 +668,11 @@ export default function HomePage({ config }: { config?: WidgetConfig }) {
               type="button"
               className="cursor-pointer"
               aria-label="Referral history"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (customerStatus === "loaded")
+                  router.push("/refer-earn-history");
+              }}
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -633,22 +700,57 @@ export default function HomePage({ config }: { config?: WidgetConfig }) {
           <div className="flex gap-2 mt-2">
             <input
               type="email"
-              disabled={!referAndEarnEnabled}
+              value={referEmail}
+              onChange={(e) => {
+                setReferEmail(e.target.value);
+                setReferError(null);
+                setReferSuccess(null);
+              }}
+              disabled={
+                !referAndEarnEnabled || customerStatus !== "loaded" || referLoading
+              }
               placeholder="Friend's email address"
-              className={`w-full h-8 border border-[#8a8a8a] rounded-lg px-3 text-[13px] leading-none focus:outline-none bg-[#fdfdfd] ${
-                !referAndEarnEnabled ? "cursor-not-allowed opacity-70" : ""
+              className={`w-full h-8 border rounded-lg px-3 text-[13px] leading-none focus:outline-none bg-[#fdfdfd] ${
+                referError
+                  ? "border-red-500"
+                  : "border-[#8a8a8a]"
+              } ${
+                !referAndEarnEnabled || customerStatus !== "loaded"
+                  ? "cursor-not-allowed opacity-70"
+                  : ""
               }`}
             />
             <button
               type="button"
-              disabled={!referAndEarnEnabled}
+              disabled={
+                !referAndEarnEnabled ||
+                customerStatus !== "loaded" ||
+                referLoading ||
+                !referEmail.trim()
+              }
+              onClick={(e) => {
+                e.stopPropagation();
+                handleSendReferral();
+              }}
               className={
-                referAndEarnEnabled ? "custom-btn" : "custom-btn disable"
+                referAndEarnEnabled && customerStatus === "loaded" && !referLoading
+                  ? "custom-btn"
+                  : "custom-btn disable"
               }
             >
-              Send
+              {referLoading ? "Sending…" : "Send"}
             </button>
           </div>
+          {referError && (
+            <p className="text-xs text-red-600 mt-1" role="alert">
+              {referError}
+            </p>
+          )}
+          {referSuccess && (
+            <p className="text-xs text-green-600 mt-1" role="status">
+              {referSuccess}
+            </p>
+          )}
         </div>
 
         {/* Banner: only show if announcements added on Customise Widget */}

@@ -8,7 +8,7 @@
   console.log("FavLoyalty widget loaded");
   // Configuration
   const DEFAULT_CONFIG = {
-    widgetUrl: "https://4ac7-122-160-14-227.ngrok-free.app", // Update with your deployed widget URL
+    widgetUrl: "https://favloyaltybigcommercewidget.share.zrok.io/", // Update with your deployed widget URL
     position: "bottom-right",
     apiUrl: "https://favbigcommerce.share.zrok.io", // Your backend API URL
     storeId: "",
@@ -129,7 +129,7 @@
             channelId: config.channelId || "",
             appClientId: config.appClientId || "",
             apiUrl: config.apiUrl || "",
-          })
+          }),
         );
       }
     } catch (e) {}
@@ -351,6 +351,212 @@
     return backdrop;
   }
 
+  // ─── Apply-coupon helpers (called from iframe "Apply Now" button) ───
+
+  function sendApplyCouponResult(source, couponId, success, error) {
+    try {
+      source.postMessage(
+        {
+          type: "fav-loyalty-apply-coupon-result",
+          couponId: couponId,
+          success: success,
+          error: error || undefined,
+        },
+        "*",
+      );
+    } catch (e) {
+      console.error("[FavLoyalty] sendApplyCouponResult postMessage error", e);
+    }
+  }
+
+  function getCartItemCount(cart) {
+    if (!cart || !cart.lineItems) return 0;
+    var physical = (cart.lineItems.physicalItems || []).length;
+    var digital = (cart.lineItems.digitalItems || []).length;
+    var giftCert = (cart.lineItems.giftCertificates || []).length;
+    var custom = (cart.lineItems.customItems || []).length;
+    return physical + digital + giftCert + custom;
+  }
+
+  function isProductInCart(cart, productId) {
+    if (!cart || !cart.lineItems || !productId) return false;
+    var allItems = (cart.lineItems.physicalItems || []).concat(
+      cart.lineItems.digitalItems || [],
+    );
+    return allItems.some(function (item) {
+      return item.productId === productId;
+    });
+  }
+
+  function applyCouponToCheckout(cartId, couponCode) {
+    return fetch(
+      "/api/storefront/checkouts/" + cartId + "/coupons",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ couponCode: couponCode }),
+      },
+    ).then(function (res) {
+      if (!res.ok) {
+        return res.json().catch(function () { return {}; }).then(function (err) {
+          throw new Error(
+            err.title || err.detail || err.message || "Failed to apply coupon",
+          );
+        });
+      }
+      return res.json();
+    });
+  }
+
+  function addProductToCart(cart, productId, variantId) {
+    var lineItem = { productId: productId, quantity: 1 };
+    if (variantId) lineItem.variantId = variantId;
+
+    if (cart) {
+      // Add to existing cart
+      return fetch("/api/storefront/carts/" + cart.id + "/items", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ lineItems: [lineItem] }),
+      }).then(function (res) {
+        if (!res.ok) {
+          return res.json().catch(function () { return {}; }).then(function (err) {
+            throw new Error(
+              err.title || err.detail || err.message || "Failed to add product to cart",
+            );
+          });
+        }
+        return res.json();
+      });
+    } else {
+      // Create a new cart with the product
+      return fetch("/api/storefront/carts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "same-origin",
+        body: JSON.stringify({ lineItems: [lineItem] }),
+      }).then(function (res) {
+        if (!res.ok) {
+          return res.json().catch(function () { return {}; }).then(function (err) {
+            throw new Error(
+              err.title || err.detail || err.message || "Failed to create cart",
+            );
+          });
+        }
+        return res.json();
+      });
+    }
+  }
+
+  /**
+   * Main handler for the "Apply Now" button in the widget coupons tab.
+   *
+   * Conditions:
+   * 1. Coupon is NOT product-specific:
+   *    a. Cart has items → apply coupon & redirect to cart
+   *    b. Cart is empty → show error on widget ("add a product first")
+   * 2. Coupon IS product-specific (restricted product or freeProduct):
+   *    a. Specific product already in cart → apply coupon & redirect
+   *    b. Product NOT in cart / cart empty → add product, apply coupon, redirect
+   */
+  function handleApplyCoupon(
+    source,
+    couponId,
+    couponCode,
+    isProductSpecific,
+    redeemType,
+    products,
+  ) {
+    // Step 1: Get current cart
+    fetch("/api/storefront/carts", {
+      method: "GET",
+      credentials: "same-origin",
+    })
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (carts) {
+        var cart =
+          Array.isArray(carts) && carts.length > 0 ? carts[0] : null;
+
+        // --- Condition 1: NOT product-specific ---
+        if (!isProductSpecific) {
+          if (!cart || getCartItemCount(cart) === 0) {
+            // 1b: Empty cart → error
+            sendApplyCouponResult(
+              source,
+              couponId,
+              false,
+              "Please add a product to your cart first",
+            );
+            return;
+          }
+          // 1a: Cart has items → apply coupon
+          return applyCouponToCheckout(cart.id, couponCode).then(function () {
+            sendApplyCouponResult(source, couponId, true);
+            window.location.href = "/cart.php";
+          });
+        }
+
+        // --- Condition 2: Product-specific (restricted or freeProduct) ---
+        var targetProduct = products && products.length > 0 ? products[0] : null;
+        if (!targetProduct || !targetProduct.productId) {
+          // Fallback: no product info available, treat like non-specific
+          if (!cart || getCartItemCount(cart) === 0) {
+            sendApplyCouponResult(
+              source,
+              couponId,
+              false,
+              "Please add a product to your cart first",
+            );
+            return;
+          }
+          return applyCouponToCheckout(cart.id, couponCode).then(function () {
+            sendApplyCouponResult(source, couponId, true);
+            window.location.href = "/cart.php";
+          });
+        }
+
+        var targetProductId = parseInt(targetProduct.productId, 10);
+        var targetVariantId = targetProduct.variantId
+          ? parseInt(targetProduct.variantId, 10)
+          : null;
+
+        // 2a: Product already in cart → apply coupon
+        if (cart && isProductInCart(cart, targetProductId)) {
+          return applyCouponToCheckout(cart.id, couponCode).then(function () {
+            sendApplyCouponResult(source, couponId, true);
+            window.location.href = "/cart.php";
+          });
+        }
+
+        // 2b: Product NOT in cart (or cart empty) → add product, then apply coupon
+        return addProductToCart(cart, targetProductId, targetVariantId).then(
+          function (updatedCart) {
+            var cartId = updatedCart.id || (cart && cart.id);
+            if (!cartId) throw new Error("Failed to determine cart ID");
+            return applyCouponToCheckout(cartId, couponCode).then(function () {
+              sendApplyCouponResult(source, couponId, true);
+              window.location.href = "/cart.php";
+            });
+          },
+        );
+      })
+      .catch(function (err) {
+        console.error("[FavLoyalty] Apply coupon error:", err);
+        sendApplyCouponResult(
+          source,
+          couponId,
+          false,
+          err && err.message ? err.message : "Failed to apply coupon",
+        );
+      });
+  }
+
+  // ─── End apply-coupon helpers ───
+
   // Create iframe for widget
   function createWidgetIframe(config) {
     const iframe = document.createElement("iframe");
@@ -407,12 +613,12 @@
                     customerId: cid,
                     customerEmail: cem,
                   },
-                  "*"
+                  "*",
                 );
                 if (resolved.customerId) {
                   console.log(
                     "[FavLoyalty] openWidget: background customerId=",
-                    resolved.customerId
+                    resolved.customerId,
                   );
                 }
               } catch (e) {}
@@ -445,6 +651,18 @@
         }
       }
 
+      // Apply coupon to cart via storefront API (called from coupons tab "Apply Now" button)
+      if (event.data.type === "fav-loyalty-apply-coupon") {
+        handleApplyCoupon(
+          event.source,
+          event.data.couponId || "",
+          event.data.couponCode || "",
+          !!event.data.isProductSpecific,
+          event.data.redeemType || null,
+          event.data.products || [],
+        );
+      }
+
       // Subscribe to newsletter via storefront API (so subscription is for this store/storefront)
       if (event.data.type === "fav-loyalty-subscribe-newsletter") {
         var email = event.data.email;
@@ -456,7 +674,7 @@
                 success: false,
                 error: "Email is required",
               },
-              "*"
+              "*",
             );
           } catch (e) {}
           return;
@@ -482,7 +700,7 @@
                       : (data && (data.message || data.title || data.detail)) ||
                         "Subscription failed",
                   },
-                  "*"
+                  "*",
                 );
               } catch (e) {}
             });
@@ -496,7 +714,7 @@
                   error:
                     err && err.message ? err.message : "Subscription failed",
                 },
-                "*"
+                "*",
               );
             } catch (e) {}
           });
@@ -619,7 +837,7 @@
       // Stencil: some themes put customer in a script tag (e.g. type="application/json" or embedded in template)
       if (id === null || id === undefined) {
         var scripts = document.querySelectorAll(
-          'script[type="application/json"], script[data-customer]'
+          'script[type="application/json"], script[data-customer]',
         );
         for (
           var i = 0;
@@ -663,7 +881,7 @@
           (window.StorefrontConfig && window.StorefrontConfig.customer
             ? "present"
             : "missing"),
-        "| If logged in, your theme may expose customer elsewhere. Set window.FavLoyaltyWidgetConfig = { customerId: 'ID' } to test."
+        "| If logged in, your theme may expose customer elsewhere. Set window.FavLoyaltyWidgetConfig = { customerId: 'ID' } to test.",
       );
     }
 
@@ -749,7 +967,7 @@
       } catch (e) {
         console.warn(
           "[FavLoyalty] getCustomerViaGraphQL: storefront-token fetch failed",
-          e
+          e,
         );
       }
     }
@@ -779,19 +997,19 @@
       var customer = json.data && json.data.customer;
       if (customer && (customer.entityId != null || customer.id != null)) {
         var id = String(
-          customer.entityId != null ? customer.entityId : customer.id
+          customer.entityId != null ? customer.entityId : customer.id,
         );
         var email = customer.email || "";
         console.log(
           "[FavLoyalty] getCustomerViaGraphQL: customer from GraphQL entityId=",
-          id
+          id,
         );
         return { customerId: id, customerEmail: email };
       }
     } catch (e) {
       console.warn(
         "[FavLoyalty] getCustomerViaGraphQL: GraphQL request failed",
-        e
+        e,
       );
     }
     return { customerId: "", customerEmail: "" };
@@ -805,7 +1023,7 @@
       "storeHash=",
       config?.storeHash,
       "apiUrl=",
-      config?.apiUrl
+      config?.apiUrl,
     );
     const finalConfig = { ...config };
     finalConfig.currentCustomerJwt = null;
@@ -871,7 +1089,7 @@
       try {
         widgetIframe.contentWindow.postMessage(
           { type: "fav-loyalty-widget-opened" },
-          "*"
+          "*",
         );
       } catch (e) {}
     }
@@ -904,12 +1122,12 @@
                   customerId: cid,
                   customerEmail: cem,
                 },
-                "*"
+                "*",
               );
               if (resolved.customerId) {
                 console.log(
                   "[FavLoyalty] openWidget: background customerId=",
-                  resolved.customerId
+                  resolved.customerId,
                 );
               }
             } catch (e) {}
@@ -959,7 +1177,7 @@
         lastSentCustomerId = "";
         widgetIframe.contentWindow.postMessage(
           { type: "fav-loyalty-customer", customerId: "", customerEmail: "" },
-          "*"
+          "*",
         );
         // Reset launcher and position to default when signed out so they stay correct on this page and on navigation
         applyDefaultThemeToButton(toggleButton);
@@ -1009,7 +1227,7 @@
       };
       Object.assign(
         widgetContainer.style,
-        positionClasses[pos] || positionClasses["bottom-right"]
+        positionClasses[pos] || positionClasses["bottom-right"],
       );
     }
     if (widgetBackdrop) {
@@ -1190,7 +1408,7 @@
             launcherType: data.launcherType,
             label: data.label,
           },
-          config
+          config,
         );
         var pos = data.position || data.widgetButton;
         if (pos) {
@@ -1223,7 +1441,7 @@
 
     if (!config.widgetUrl) {
       console.error(
-        "FavLoyalty Widget: widgetUrl is required. Set it via data-widget-url attribute or FavLoyaltyWidgetConfig."
+        "FavLoyalty Widget: widgetUrl is required. Set it via data-widget-url attribute or FavLoyaltyWidgetConfig.",
       );
       return;
     }

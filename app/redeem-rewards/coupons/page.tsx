@@ -21,6 +21,15 @@ function getConfig(): WidgetConfig {
   );
 }
 
+type CouponProduct = {
+  id?: string;
+  name: string;
+  imgUrl?: string | null;
+  url?: string | null;
+  productId?: string | null;
+  variantId?: string | null;
+};
+
 type CouponItem = {
   id: string;
   offer: string;
@@ -28,12 +37,8 @@ type CouponItem = {
   code: string;
   expiresAt: string | null;
   used?: boolean;
-  appliesToProducts?: {
-    id?: string;
-    name: string;
-    imgUrl?: string | null;
-    url?: string | null;
-  }[];
+  redeemType?: string | null;
+  appliesToProducts?: CouponProduct[];
 };
 
 function fallbackCopyText(text: string): boolean {
@@ -78,6 +83,11 @@ export default function CouponsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [applyingId, setApplyingId] = useState<string | null>(null);
+  const [applyError, setApplyError] = useState<{
+    id: string;
+    message: string;
+  } | null>(null);
 
   useEffect(() => {
     setConfig(getConfig());
@@ -89,6 +99,19 @@ export default function CouponsPage() {
           customerId:
             (data as { customerId?: string }).customerId ?? prev.customerId,
         }));
+      }
+      // Handle apply-coupon result from parent (widget-loader.js)
+      if (data?.type === "fav-loyalty-apply-coupon-result") {
+        setApplyingId(null);
+        if (!data.success) {
+          setApplyError({
+            id: data.couponId || "",
+            message: data.error || "Failed to apply coupon",
+          });
+          // Auto-clear error after 5 seconds
+          setTimeout(() => setApplyError(null), 5000);
+        }
+        // On success the parent page redirects to cart, so no action needed here
       }
     };
     window.addEventListener("message", onMessage);
@@ -150,6 +173,30 @@ export default function CouponsPage() {
       setCopiedId(id);
       setTimeout(() => setCopiedId(null), 2000);
     });
+  };
+
+  const handleApplyNow = (coupon: CouponItem) => {
+    if (applyingId) return; // prevent double-click
+    setApplyingId(coupon.id);
+    setApplyError(null);
+
+    const isProductSpecific =
+      Array.isArray(coupon.appliesToProducts) &&
+      coupon.appliesToProducts.length > 0;
+
+    // Send message to parent (widget-loader.js on the storefront page)
+    // so it can call BigCommerce Storefront APIs (same-origin requirement)
+    window.parent.postMessage(
+      {
+        type: "fav-loyalty-apply-coupon",
+        couponId: coupon.id,
+        couponCode: coupon.code,
+        isProductSpecific,
+        redeemType: coupon.redeemType || null,
+        products: isProductSpecific ? coupon.appliesToProducts : [],
+      },
+      "*",
+    );
   };
 
   if (loading) {
@@ -277,40 +324,50 @@ export default function CouponsPage() {
               <div className="border-t border-dashed border-[#d4d4d4]" />
 
               {/* Bottom section: coupon code + Apply Now (disabled when used) */}
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-2 min-w-0">
-                  <div className="border border-dashed border-[#a3a3a3] rounded-lg bg-[#f5f5f5] px-3 py-2 flex items-center gap-2">
-                    <span className="text-[13px] font-medium text-[#303030] truncate">
-                      {coupon.code}
-                    </span>
-                    {!isUsed && (
-                      <button
-                        type="button"
-                        onClick={() => handleCopy(coupon.code, coupon.id)}
-                        className="shrink-0 p-0.5 rounded text-[#737373] hover:text-[#303030] hover:bg-[#e5e5e5] transition-colors"
-                        aria-label="Copy code"
-                      >
-                        <Copy size={16} />
-                      </button>
+              <div className="flex flex-col gap-2">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="border border-dashed border-[#a3a3a3] rounded-lg bg-[#f5f5f5] px-3 py-2 flex items-center gap-2">
+                      <span className="text-[13px] font-medium text-[#303030] truncate">
+                        {coupon.code}
+                      </span>
+                      {!isUsed && (
+                        <button
+                          type="button"
+                          onClick={() => handleCopy(coupon.code, coupon.id)}
+                          className="shrink-0 p-0.5 rounded text-[#737373] hover:text-[#303030] hover:bg-[#e5e5e5] transition-colors"
+                          aria-label="Copy code"
+                        >
+                          <Copy size={16} />
+                        </button>
+                      )}
+                    </div>
+                    {!isUsed && copiedId === coupon.id && (
+                      <span className="text-xs text-[#16a34a] font-medium">
+                        Copied!
+                      </span>
                     )}
                   </div>
-                  {!isUsed && copiedId === coupon.id && (
-                    <span className="text-xs text-[#16a34a] font-medium">
-                      Copied!
-                    </span>
-                  )}
+                  <button
+                    type="button"
+                    className="custom-btn"
+                    disabled={isUsed || applyingId === coupon.id}
+                    aria-disabled={isUsed || applyingId === coupon.id}
+                    onClick={() => {
+                      if (!isUsed) handleApplyNow(coupon);
+                    }}
+                    style={
+                      isUsed || applyingId === coupon.id
+                        ? { opacity: 0.6, cursor: "not-allowed" }
+                        : undefined
+                    }
+                  >
+                    {applyingId === coupon.id ? "Applying…" : "Apply Now"}
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  className="custom-btn"
-                  disabled={isUsed}
-                  aria-disabled={isUsed}
-                  style={
-                    isUsed ? { opacity: 0.6, cursor: "not-allowed" } : undefined
-                  }
-                >
-                  Apply Now
-                </button>
+                {applyError?.id === coupon.id && (
+                  <p className="text-xs text-red-600">{applyError.message}</p>
+                )}
               </div>
             </div>
           );

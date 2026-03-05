@@ -1,7 +1,7 @@
 "use client";
 
-import HomePage from "./home/page";
 import WidgetWrapper from "@/components/WidgetWrapper";
+import HomePage from "./home/page";
 
 export default function Home() {
   return (

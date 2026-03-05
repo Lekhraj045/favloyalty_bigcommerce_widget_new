@@ -47,7 +47,7 @@ function getStorageKey(storeHash?: string, channelId?: string): string {
 
 function getPersistedCustomer(
   storeHash?: string,
-  channelId?: string
+  channelId?: string,
 ): { customerId?: string; customerEmail?: string } | null {
   if (typeof window === "undefined" || !window.sessionStorage) return null;
   try {
@@ -69,13 +69,13 @@ function setPersistedCustomer(
   storeHash: string | undefined,
   channelId: string | undefined,
   customerId: string,
-  customerEmail?: string
+  customerEmail?: string,
 ): void {
   if (typeof window === "undefined" || !window.sessionStorage) return;
   try {
     sessionStorage.setItem(
       getStorageKey(storeHash, channelId),
-      JSON.stringify({ customerId, customerEmail: customerEmail ?? "" })
+      JSON.stringify({ customerId, customerEmail: customerEmail ?? "" }),
     );
   } catch {
     // ignore
@@ -135,12 +135,12 @@ export default function EmbedPage() {
               next.storeHash ?? prev.storeHash,
               next.channelId ?? prev.channelId,
               String(next.customerId),
-              next.customerEmail
+              next.customerEmail,
             );
           } else {
             clearPersistedCustomer(
               next.storeHash ?? prev.storeHash,
-              next.channelId ?? prev.channelId
+              next.channelId ?? prev.channelId,
             );
           }
           return next;
@@ -166,7 +166,7 @@ export default function EmbedPage() {
       window.parent.postMessage({ type: "fav-loyalty-widget-loaded" }, "*");
       window.parent.postMessage(
         { type: "fav-loyalty-widget-height", height: 586 },
-        "*"
+        "*",
       );
     }
   }, [config, isInIframe]);

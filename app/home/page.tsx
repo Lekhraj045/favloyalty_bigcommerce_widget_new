@@ -8,6 +8,7 @@ import { getHeaderStyle, useWidgetTheme } from "@/contexts/WidgetThemeContext";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import LoginCard from "./components/LoginCard";
 
 type WidgetConfig = {
   apiUrl?: string;
@@ -476,72 +477,13 @@ export default function HomePage({ config }: { config?: WidgetConfig }) {
         )}
 
         {/* Login card when signed out — warm orange/brown, centered, compact; links use store's login/create account URLs */}
-        {(customerStatus === "guest" || customerStatus === "not_in_program") &&
-          (() => {
-            const storeOrigin = (config?.storeOrigin || "").replace(/\/+$/, "");
-            const loginUrl = storeOrigin
-              ? `${storeOrigin}/login.php`
-              : "/login.php";
-            const createAccountUrl = storeOrigin
-              ? `${storeOrigin}/login.php?action=create_account`
-              : "/login.php?action=create_account";
-            return (
-              <div className="card !p-0">
-                <div className="flex gap-2 items-end">
-                  <div className="px-3">
-                    <Image
-                      src={`${process.env.NEXT_PUBLIC_BASE_PATH}/images/join-now.svg`}
-                      alt="Points"
-                      width={120}
-                      height={105}
-                    />
-                  </div>
-                  <div className="flex-1 pr-4 py-4">
-                    <h4 className="text-[13px] text-center text-gray-800 mb-3 leading-snug">
-                      Sign up now and discover our rewards program
-                    </h4>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (typeof window !== "undefined") {
-                          try {
-                            (window.top || window).location.href =
-                              createAccountUrl;
-                          } catch {
-                            window.location.href = createAccountUrl;
-                          }
-                        }
-                      }}
-                      className="custom-btn w-full"
-                    >
-                      Join Now
-                    </button>
-                    <p className="text-[13px] mt-3 text-gray-700 text-center">
-                      Already a Member?{" "}
-                      <button
-                        type="button"
-                        className="font-semibold underline decoration-2 underline-offset-1 cursor-pointer focus:outline-none hover:opacity-90"
-                        style={{ color: theme.headerColor || "#B87333" }}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (typeof window !== "undefined") {
-                            try {
-                              (window.top || window).location.href = loginUrl;
-                            } catch {
-                              window.location.href = loginUrl;
-                            }
-                          }
-                        }}
-                      >
-                        Log In
-                      </button>
-                    </p>
-                  </div>
-                </div>
-              </div>
-            );
-          })()}
+        {(customerStatus === "guest" ||
+          customerStatus === "not_in_program") && (
+          <LoginCard
+            storeOrigin={config?.storeOrigin}
+            headerColor={theme?.headerColor || "#B87333"}
+          />
+        )}
 
         {/* Action Buttons — when signed in: clickable; when signed out: visible but disabled */}
         {(customerStatus === "loaded" ||

@@ -54,6 +54,18 @@ type RedeemCoupon = {
   };
 };
 
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  USD: "$",
+  INR: "₹",
+  EUR: "€",
+  GBP: "£",
+};
+
+function getCurrencyIcon(currencyCode: string): string {
+  const key = (currencyCode ?? "").toUpperCase().trim();
+  return (CURRENCY_SYMBOLS[key] ?? currencyCode) || "$";
+}
+
 const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
 
 function getMethodIcon(redeemType: RedeemType): string {
@@ -71,7 +83,7 @@ function getMethodIcon(redeemType: RedeemType): string {
   }
 }
 
-function getMethodDisplayName(coupon: RedeemCoupon): string {
+function getMethodDisplayName(coupon: RedeemCoupon, currency?: string): string {
   if (coupon.coupon?.name) return coupon.coupon.name;
   const c = coupon.coupon;
   switch (coupon.redeemType) {
@@ -79,10 +91,12 @@ function getMethodDisplayName(coupon: RedeemCoupon): string {
       return c?.discountAmount != null
         ? `Flat ${c.discountAmount}% off`
         : "Percentage Discount";
-    case "storeCredit":
+    case "storeCredit": {
+      const symbol = getCurrencyIcon(currency ?? "USD");
       return c?.discountAmount != null
-        ? `$${c.discountAmount} off`
+        ? `${symbol}${c.discountAmount} off`
         : "Get Fixed Discount";
+    }
     case "freeShipping":
       return "Free Shipping";
     case "freeProduct":
@@ -114,7 +128,7 @@ function getMethodSubtitle(coupon: RedeemCoupon): string {
 
 function getMethodHref(
   redeemType: RedeemType,
-  couponId: string | undefined
+  couponId: string | undefined,
 ): string {
   const base = "/redeem-rewards/methods";
   const q = couponId ? `?couponId=${encodeURIComponent(couponId)}` : "";
@@ -150,6 +164,8 @@ export default function MethodsPage() {
   const [openAccordionId, setOpenAccordionId] = useState<string | null>(null);
   const [customerPoints, setCustomerPoints] = useState<number | null>(null);
   const [cardErrors, setCardErrors] = useState<Record<string, string>>({});
+
+  const [currency, setCurrency] = useState<string | null>(null);
 
   useEffect(() => {
     setConfig(getConfig());
@@ -192,7 +208,7 @@ export default function MethodsPage() {
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(
-          body?.message || `Failed to load redeem methods (${res.status})`
+          body?.message || `Failed to load redeem methods (${res.status})`,
         );
       }
       const data = await res.json();
@@ -246,6 +262,11 @@ export default function MethodsPage() {
           setCustomerPoints(data.points);
         } else {
           setCustomerPoints(null);
+        }
+        if (data.success && typeof data.currency === "string") {
+          setCurrency(data.currency);
+        } else {
+          setCurrency(null);
         }
       })
       .catch(() => {
@@ -302,7 +323,7 @@ export default function MethodsPage() {
                   <div className="w-[40px] h-[40px] bg-linear-to-br from-green-50 to-emerald-50 rounded-lg flex items-center justify-center shrink-0">
                     <Image
                       src={getMethodIcon(coupon.redeemType)}
-                      alt={getMethodDisplayName(coupon)}
+                      alt={getMethodDisplayName(coupon, currency ?? "USD")}
                       width={30}
                       height={30}
                       className="min-w-[30px] min-h-[30px]"
@@ -310,7 +331,7 @@ export default function MethodsPage() {
                   </div>
                   <div className="flex flex-col min-w-0 flex-1">
                     <h3 className="text-sm font-medium text-[#303030]">
-                      {getMethodDisplayName(coupon)}
+                      {getMethodDisplayName(coupon, currency ?? "USD")}
                     </h3>
                     <p className="text-xs text-[#616161]">
                       {getMethodSubtitle(coupon)}

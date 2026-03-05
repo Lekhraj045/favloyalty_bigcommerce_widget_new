@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
 import WidgetWrapper from "@/components/WidgetWrapper";
 import { getHeaderStyle, useWidgetTheme } from "@/contexts/WidgetThemeContext";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { motion } from "motion/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 type WidgetConfig = {
   apiUrl?: string;
@@ -91,10 +91,7 @@ export default function TransactionHistoryPage() {
       channelId !== "null" &&
       channelId !== "undefined";
     const useJwt =
-      jwt &&
-      jwt !== "null" &&
-      jwt !== "undefined" &&
-      typeof jwt === "string";
+      jwt && jwt !== "null" && jwt !== "undefined" && typeof jwt === "string";
 
     if (!apiUrl || (!useJwt && !hasStoreAndChannel)) {
       setLoading(false);
@@ -201,16 +198,10 @@ export default function TransactionHistoryPage() {
   const headerStyle = getHeaderStyle(theme);
 
   const header = (
-    <div
-      className="text-white p-4 relative rounded-t-2xl"
-      style={headerStyle}
-    >
+    <div className="text-white p-4 relative rounded-t-2xl" style={headerStyle}>
       <div className="flex gap-2">
         <div className="mt-[5px]">
-          <button
-            className="cursor-pointer"
-            onClick={() => router.back()}
-          >
+          <button className="cursor-pointer" onClick={() => router.back()}>
             <ArrowLeft size={18} />
           </button>
         </div>
@@ -266,7 +257,9 @@ export default function TransactionHistoryPage() {
                     />
                   )}
                 </div>
-                <span className="text-sm font-medium">{pointsUnit} History</span>
+                <span className="text-sm font-medium">
+                  {pointsUnit} History
+                </span>
               </div>
 
               {loading ? (

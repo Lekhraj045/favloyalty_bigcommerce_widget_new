@@ -209,7 +209,7 @@ export default function EarnPointPage() {
     let cancelled = false;
     setWaysToEarnLoading(true);
     const url = `${apiUrl}/api/widget/channel-settings?storeHash=${encodeURIComponent(
-      storeHash
+      storeHash,
     )}&channelId=${encodeURIComponent(String(channelId))}`;
     fetch(url, { method: "GET" })
       .then((res) => res.json())
@@ -259,10 +259,10 @@ export default function EarnPointPage() {
   const pointsLabel = pointsLoading
     ? "Loading..."
     : pointsData
-    ? `You have ${Number(pointsData.points).toFixed(2)} ${
-        pointsData.pointsUnit
-      }`
-    : "You have 0.00 Points";
+      ? `You have ${Number(pointsData.points).toFixed(2)} ${
+          pointsData.pointsUnit
+        }`
+      : "You have 0.00 Points";
 
   const header = (
     <div className="text-white p-4 relative rounded-t-2xl" style={headerStyle}>
@@ -294,7 +294,11 @@ export default function EarnPointPage() {
   if (showCelebrateBirthday) {
     return (
       <CelebrateBirthdayPage
-        config={config}
+        config={{
+          ...config,
+          customerId:
+            config.customerId != null ? String(config.customerId) : undefined,
+        }}
         onBack={() => {
           setShowCelebrateBirthday(false);
           setReopenTrigger((t) => t + 1);

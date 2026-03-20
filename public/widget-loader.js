@@ -8,9 +8,9 @@
   console.log("FavLoyalty widget loaded");
   // Configuration
   const DEFAULT_CONFIG = {
-    widgetUrl: "https://favloyaltybigcommercewidget.share.zrok.io/", // Update with your deployed widget URL
+    widgetUrl: "https://favloyaltybigcommercewidget7.shares.zrok.io/", // Update with your deployed widget URL
     position: "bottom-right",
-    apiUrl: "https://favbigcommerce.share.zrok.io", // Your backend API URL
+    apiUrl: "https://favbigcommerce7.shares.zrok.io", // Your backend API URL
     storeId: "",
     storeHash: "",
     appClientId: "",
@@ -389,21 +389,26 @@
   }
 
   function applyCouponToCheckout(cartId, couponCode) {
-    return fetch(
-      "/api/storefront/checkouts/" + cartId + "/coupons",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "same-origin",
-        body: JSON.stringify({ couponCode: couponCode }),
-      },
-    ).then(function (res) {
+    return fetch("/api/storefront/checkouts/" + cartId + "/coupons", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "same-origin",
+      body: JSON.stringify({ couponCode: couponCode }),
+    }).then(function (res) {
       if (!res.ok) {
-        return res.json().catch(function () { return {}; }).then(function (err) {
-          throw new Error(
-            err.title || err.detail || err.message || "Failed to apply coupon",
-          );
-        });
+        return res
+          .json()
+          .catch(function () {
+            return {};
+          })
+          .then(function (err) {
+            throw new Error(
+              err.title ||
+                err.detail ||
+                err.message ||
+                "Failed to apply coupon",
+            );
+          });
       }
       return res.json();
     });
@@ -422,11 +427,19 @@
         body: JSON.stringify({ lineItems: [lineItem] }),
       }).then(function (res) {
         if (!res.ok) {
-          return res.json().catch(function () { return {}; }).then(function (err) {
-            throw new Error(
-              err.title || err.detail || err.message || "Failed to add product to cart",
-            );
-          });
+          return res
+            .json()
+            .catch(function () {
+              return {};
+            })
+            .then(function (err) {
+              throw new Error(
+                err.title ||
+                  err.detail ||
+                  err.message ||
+                  "Failed to add product to cart",
+              );
+            });
         }
         return res.json();
       });
@@ -439,11 +452,19 @@
         body: JSON.stringify({ lineItems: [lineItem] }),
       }).then(function (res) {
         if (!res.ok) {
-          return res.json().catch(function () { return {}; }).then(function (err) {
-            throw new Error(
-              err.title || err.detail || err.message || "Failed to create cart",
-            );
-          });
+          return res
+            .json()
+            .catch(function () {
+              return {};
+            })
+            .then(function (err) {
+              throw new Error(
+                err.title ||
+                  err.detail ||
+                  err.message ||
+                  "Failed to create cart",
+              );
+            });
         }
         return res.json();
       });
@@ -478,8 +499,7 @@
         return res.json();
       })
       .then(function (carts) {
-        var cart =
-          Array.isArray(carts) && carts.length > 0 ? carts[0] : null;
+        var cart = Array.isArray(carts) && carts.length > 0 ? carts[0] : null;
 
         // --- Condition 1: NOT product-specific ---
         if (!isProductSpecific) {
@@ -501,7 +521,8 @@
         }
 
         // --- Condition 2: Product-specific (restricted or freeProduct) ---
-        var targetProduct = products && products.length > 0 ? products[0] : null;
+        var targetProduct =
+          products && products.length > 0 ? products[0] : null;
         if (!targetProduct || !targetProduct.productId) {
           // Fallback: no product info available, treat like non-specific
           if (!cart || getCartItemCount(cart) === 0) {
@@ -645,7 +666,7 @@
       if (event.data.type === "fav-loyalty-widget-theme") {
         applyThemeToButton(toggleButton, event.data, config);
         var pos = event.data.position || event.data.widgetButton;
-        if (pos) {
+        if (pos && !isWidgetOpen) {
           effectivePosition = normalizePosition(pos);
           applyPosition(toggleButton, widgetContainer, effectivePosition);
         }
@@ -1180,8 +1201,8 @@
           "*",
         );
         // Reset launcher and position to default when signed out so they stay correct on this page and on navigation
-        applyDefaultThemeToButton(toggleButton);
-        effectivePosition = "bottom-right";
+        // applyDefaultThemeToButton(toggleButton);
+        // effectivePosition = "bottom-right";
         applyPosition(toggleButton, widgetContainer, effectivePosition);
       } catch (e) {}
     }
@@ -1419,8 +1440,8 @@
         getCustomerViaGraphQL(config)
           .then(function (resolved) {
             if (!resolved.customerId && toggleButton) {
-              applyDefaultThemeToButton(toggleButton);
-              effectivePosition = "bottom-right";
+              // applyDefaultThemeToButton(toggleButton);
+              // effectivePosition = "bottom-right";
               applyPosition(toggleButton, widgetContainer, effectivePosition);
             }
             showLauncherButton();

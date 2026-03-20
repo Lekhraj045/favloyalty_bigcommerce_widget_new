@@ -13,6 +13,56 @@ const FAQS = [
     q: "How can I track the status of my referred friends and earned points?",
     a: "Once your friend successfully joins through your code and places his first order, you will get notification here and via email.",
   },
+  {
+    q: "What is Multi-Channel Loyalty?",
+    a: "Multi-channel loyalty allows you to manage separate loyalty programs for different channels, each with its own customers, rewards, and settings.",
+  },
+  {
+    q: "Are customers shared across channels?",
+    a: "No, customers are channel-specific. A customer in one channel will not be automatically available in another channel.",
+  },
+  {
+    q: "Do loyalty points sync across channels?",
+    a: "No, points are maintained separately for each channel and cannot be shared or transferred.",
+  },
+  {
+    q: "Can the same customer join multiple channels?",
+    a: "Yes, but they will be treated as separate accounts in each channel.",
+  },
+  {
+    q: "Can I run different loyalty programs on each channel?",
+    html: (
+      <div>
+        <p>Yes, each channel can have its own:</p>
+        <ul className="list-disc list-inside">
+          <li>Points system</li>
+          <li>Rewards</li>
+          <li>Campaigns</li>
+          <li>Rules</li>
+        </ul>
+      </div>
+    ),
+  },
+  {
+    q: "Are coupons and rewards shared across channels?",
+    a: "No, rewards and coupons are restricted to the channel they are created in",
+  },
+  {
+    q: "Does each channel have its own widget?",
+    a: "Yes, each channel has its own widget configuration and display settings.",
+  },
+  {
+    q: "How is customer data managed?",
+    a: "Customer data is stored separately per channel to ensure independent tracking and segmentation.",
+  },
+  {
+    q: "Can I customize widget design per channel?",
+    a: "Yes, each channel can have a completely different widget design and behavior.",
+  },
+  {
+    q: "Is analytics separated by channel?",
+    a: "Yes, analytics, reports, and performance metrics are tracked individually for each channel.",
+  },
 ];
 
 type ReferFaqsPanelProps = {
@@ -64,7 +114,7 @@ export function ReferFaqsPanel({
             {isOpen && (
               <div className="px-4 pb-3 pt-0">
                 <p className="text-sm text-[#6B7280] leading-relaxed">
-                  {faq.a}
+                  {faq.html ? faq.html : faq.a}
                 </p>
               </div>
             )}

@@ -6,7 +6,7 @@ import { ArrowLeft, Copy } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
 type WidgetConfig = {
@@ -54,7 +54,7 @@ function fallbackCopyText(text: string): boolean {
 
 async function copyToClipboard(
   text: string,
-  onSuccess: () => void
+  onSuccess: () => void,
 ): Promise<void> {
   if (typeof window === "undefined") return;
   try {
@@ -69,7 +69,7 @@ async function copyToClipboard(
   if (fallbackCopyText(text)) onSuccess();
 }
 
-export default function FreeShippingPage() {
+function FreeShippingContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const couponId = searchParams.get("couponId") ?? "";
@@ -88,6 +88,8 @@ export default function FreeShippingPage() {
     expiresAt: string | null;
   } | null>(null);
   const [copied, setCopied] = useState(false);
+
+  const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
 
   useEffect(() => {
     setConfig(getConfig());
@@ -133,13 +135,13 @@ export default function FreeShippingPage() {
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(
-          body?.message || `Failed to load redeem method (${res.status})`
+          body?.message || `Failed to load redeem method (${res.status})`,
         );
       }
       const data = await res.json();
       const list = Array.isArray(data) ? data : [];
       const found = list.find(
-        (c: RedeemCoupon) => (c._id ?? "").toString() === couponId
+        (c: RedeemCoupon) => (c._id ?? "").toString() === couponId,
       );
       setRedeemSetting(found ?? null);
       if (!found) setLoadError("Redeem method not found");
@@ -162,7 +164,7 @@ export default function FreeShippingPage() {
   }, [fetchRedeemSettings]);
 
   const handleCancel = () => {
-    router.push("/redeem-rewards");
+    router.push(`${basePath}/redeem-rewards`);
   };
 
   const handleConfirm = async () => {
@@ -271,7 +273,7 @@ export default function FreeShippingPage() {
           <button
             type="button"
             className="custom-btn"
-            onClick={() => router.push("/redeem-rewards")}
+            onClick={() => router.push("redeem-rewards")}
           >
             Back to Rewards
           </button>
@@ -339,7 +341,7 @@ export default function FreeShippingPage() {
                   </div>
                 </div>
               </div>,
-              document.body
+              document.body,
             )}
 
           {/* Success view after Confirm */}
@@ -378,7 +380,7 @@ export default function FreeShippingPage() {
                     )}
                   </div>
                   <Link
-                    href="/redeem-rewards?tab=coupons"
+                    href={`${basePath}/redeem-rewards?tab=coupons`}
                     className="shrink-0 px-4 py-2.5 rounded-lg text-sm font-medium border-2 border-[#14b8a6] text-[#14b8a6] bg-white hover:bg-[#f0fdfa] transition-colors inline-flex items-center justify-center"
                   >
                     View My Coupons
@@ -394,7 +396,7 @@ export default function FreeShippingPage() {
                   <p className="text-xs text-[#616161]">
                     {result.expiresAt
                       ? `The discount code expires on ${new Date(
-                          result.expiresAt
+                          result.expiresAt,
                         ).toLocaleDateString("en-GB", {
                           day: "numeric",
                           month: "long",
@@ -409,5 +411,19 @@ export default function FreeShippingPage() {
         </motion.div>
       </div>
     </WidgetWrapper>
+  );
+}
+
+export default function FreeShippingPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-[200px] text-sm text-gray-500">
+          Loading...
+        </div>
+      }
+    >
+      <FreeShippingContent />
+    </Suspense>
   );
 }

@@ -130,7 +130,7 @@ function getMethodHref(
   redeemType: RedeemType,
   couponId: string | undefined,
 ): string {
-  const base = "/redeem-rewards/methods";
+  const base = "redeem-rewards/methods";
   const q = couponId ? `?couponId=${encodeURIComponent(couponId)}` : "";
   switch (redeemType) {
     case "purchase":

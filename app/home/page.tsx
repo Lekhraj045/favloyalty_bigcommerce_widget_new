@@ -100,7 +100,7 @@ export default function HomePage({ config }: { config?: WidgetConfig }) {
     });
 
     function resetWidgetToDefault() {
-      setAnnouncements([]);
+      // setAnnouncements([]);
       theme?.resetThemeToDefault?.();
     }
 
@@ -231,9 +231,9 @@ export default function HomePage({ config }: { config?: WidgetConfig }) {
           setReferAndEarnEnabled(!!data.referAndEarnEnabled);
         if (typeof data.referAndEarnPoints === "number")
           setReferAndEarnPoints(data.referAndEarnPoints);
-        if (isSignedIn && Array.isArray(data.announcements))
+        if (Array.isArray(data.announcements))
           setAnnouncements(data.announcements);
-        else if (!isSignedIn) setAnnouncements([]);
+        // else if (!isSignedIn) setAnnouncements([]);
         if (data.pointsLogoSrc && typeof data.pointsLogoSrc === "string")
           setPointsLogoSrc(data.pointsLogoSrc);
         if (data.pointsUnit != null && typeof data.pointsUnit === "string")
@@ -320,7 +320,19 @@ export default function HomePage({ config }: { config?: WidgetConfig }) {
   const pointLogoUrl =
     pointsLogoSrc.startsWith("http") || pointsLogoSrc.startsWith("data:")
       ? pointsLogoSrc
-      : `${process.env.NEXT_PUBLIC_BASE_PATH || ""}/images/${pointsLogoSrc}`;
+      : /^point-icon\d\.svg$/i.test(pointsLogoSrc)
+        ? `${process.env.NEXT_PUBLIC_BASE_PATH || ""}/images/${pointsLogoSrc}`
+        : `${process.env.NEXT_PUBLIC_API_BASE_URL || ""}${pointsLogoSrc.startsWith("/") ? "" : "/"}${pointsLogoSrc}`;
+
+  useEffect(() => {
+    console.log(
+      "[FavLoyalty Home] effect: pointsLogoSrc=",
+      pointsLogoSrc,
+      pointsLogoSrc.startsWith("http") || pointsLogoSrc.startsWith("data:"),
+      pointLogoUrl,
+    );
+  }, [pointsLogoSrc, pointLogoUrl]);
+
   const pointLogoIsExternal =
     pointsLogoSrc.startsWith("http") || pointsLogoSrc.startsWith("data:");
 
@@ -450,7 +462,7 @@ export default function HomePage({ config }: { config?: WidgetConfig }) {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    router.push("/transaction-history");
+                    router.push("transaction-history");
                   }}
                   className="flex items-center gap-1 cursor-pointer"
                 >
@@ -501,7 +513,7 @@ export default function HomePage({ config }: { config?: WidgetConfig }) {
               onClick={(e) => {
                 if (customerStatus !== "loaded") return;
                 e.stopPropagation();
-                router.push("/earn-point");
+                router.push("earn-point");
               }}
               className="w-full bg-white border border-[#DEDEDE] rounded-xl p-3 flex items-center gap-2 text-[13px] font-medium cursor-pointer disabled:cursor-not-allowed"
             >
@@ -529,7 +541,7 @@ export default function HomePage({ config }: { config?: WidgetConfig }) {
               onClick={(e) => {
                 if (customerStatus !== "loaded") return;
                 e.stopPropagation();
-                router.push("/redeem-rewards");
+                router.push("redeem-rewards");
               }}
               className="w-full bg-white border border-[#DEDEDE] rounded-xl p-3 flex items-center gap-2 text-[13px] font-medium cursor-pointer disabled:cursor-not-allowed mt-3"
             >
@@ -619,7 +631,7 @@ export default function HomePage({ config }: { config?: WidgetConfig }) {
               onClick={(e) => {
                 e.stopPropagation();
                 if (customerStatus === "loaded")
-                  router.push("/refer-earn-history");
+                  router.push("refer-earn-history");
               }}
             >
               <svg

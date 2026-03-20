@@ -6,7 +6,7 @@ import { ArrowLeft, Copy } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import PointsRedeem from "./components/PointsRedeem";
 
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
@@ -63,7 +63,7 @@ function fallbackCopyText(text: string): boolean {
 
 async function copyToClipboard(
   text: string,
-  onSuccess: () => void
+  onSuccess: () => void,
 ): Promise<void> {
   if (typeof window === "undefined") return;
   try {
@@ -78,7 +78,7 @@ async function copyToClipboard(
   if (fallbackCopyText(text)) onSuccess();
 }
 
-export default function GetFixedDiscountPage() {
+function GetFixedDiscountContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const couponId = searchParams.get("couponId") ?? "";
@@ -144,13 +144,13 @@ export default function GetFixedDiscountPage() {
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
         throw new Error(
-          body?.message || `Failed to load redeem method (${res.status})`
+          body?.message || `Failed to load redeem method (${res.status})`,
         );
       }
       const data = await res.json();
       const list = Array.isArray(data) ? data : [];
       const found = list.find(
-        (c: RedeemCoupon) => (c._id ?? "").toString() === couponId
+        (c: RedeemCoupon) => (c._id ?? "").toString() === couponId,
       );
       setRedeemSetting(found ?? null);
       if (!found) setLoadError("Redeem method not found");
@@ -218,13 +218,13 @@ export default function GetFixedDiscountPage() {
       redeemSetting.coupon.restriction?.maxReduption?.status &&
       Number(redeemSetting.coupon.restriction?.maxReduption?.value) > 0
         ? Math.floor(
-            Number(redeemSetting.coupon.restriction.maxReduption.value)
+            Number(redeemSetting.coupon.restriction.maxReduption.value),
           )
         : null;
     const minP = Math.max(1, value);
     const maxP = Math.min(
       customerPoints,
-      maxRed != null ? maxRed : customerPoints
+      maxRed != null ? maxRed : customerPoints,
     );
     const effectiveMax = Math.max(minP, maxP);
     setSelectedPoints((prev) => Math.min(effectiveMax, Math.max(minP, prev)));
@@ -312,7 +312,7 @@ export default function GetFixedDiscountPage() {
   const minPoints = Math.max(1, pointsPerUnit);
   const maxPoints = Math.min(
     customerPoints,
-    maxRedemption != null ? maxRedemption : customerPoints
+    maxRedemption != null ? maxRedemption : customerPoints,
   );
   const effectiveMaxPoints = Math.max(minPoints, maxPoints);
   const currencyAmount = (selectedPoints / pointsPerUnit) * discountAmount;
@@ -372,7 +372,7 @@ export default function GetFixedDiscountPage() {
           <button
             type="button"
             className="custom-btn"
-            onClick={() => router.push("/redeem-rewards")}
+            onClick={() => router.push("redeem-rewards")}
           >
             Back to Rewards
           </button>
@@ -425,7 +425,7 @@ export default function GetFixedDiscountPage() {
                   )}
                 </div>
                 <Link
-                  href="/redeem-rewards?tab=coupons"
+                  href={`${basePath}/redeem-rewards?tab=coupons`}
                   className="custom-btn shrink-0 inline-flex items-center justify-center"
                 >
                   View My Coupons
@@ -440,7 +440,7 @@ export default function GetFixedDiscountPage() {
                 <p className="text-xs text-[#616161]">
                   {result.expiresAt
                     ? `The discount code expires on ${new Date(
-                        result.expiresAt
+                        result.expiresAt,
                       ).toLocaleDateString("en-GB", {
                         day: "numeric",
                         month: "long",
@@ -519,12 +519,12 @@ export default function GetFixedDiscountPage() {
                       const nextPoints =
                         pointsPerUnit > 0 && discountAmount > 0
                           ? Math.round(
-                              (clamped / discountAmount) * pointsPerUnit
+                              (clamped / discountAmount) * pointsPerUnit,
                             )
                           : selectedPoints;
                       const safePoints = Math.min(
                         effectiveMaxPoints,
-                        Math.max(minPoints, nextPoints)
+                        Math.max(minPoints, nextPoints),
                       );
                       setSelectedPoints(safePoints);
                     }}
@@ -536,7 +536,7 @@ export default function GetFixedDiscountPage() {
                         const amt =
                           (selectedPoints / pointsPerUnit) * discountAmount;
                         setAmountInput(
-                          Number.isFinite(amt) ? amt.toFixed(2) : ""
+                          Number.isFinite(amt) ? amt.toFixed(2) : "",
                         );
                         return;
                       }
@@ -595,5 +595,19 @@ export default function GetFixedDiscountPage() {
         </motion.div>
       </div>
     </WidgetWrapper>
+  );
+}
+
+export default function GetFixedDiscountPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-[200px] text-sm text-gray-500">
+          Loading...
+        </div>
+      }
+    >
+      <GetFixedDiscountContent />
+    </Suspense>
   );
 }

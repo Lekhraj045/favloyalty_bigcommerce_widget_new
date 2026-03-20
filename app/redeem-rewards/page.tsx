@@ -5,7 +5,7 @@ import { getHeaderStyle, useWidgetTheme } from "@/contexts/WidgetThemeContext";
 import { ArrowLeft } from "lucide-react";
 import { motion } from "motion/react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 
 import { Tab, TabList, TabPanel, Tabs } from "react-tabs";
 import "react-tabs/style/react-tabs.css";
@@ -17,6 +17,7 @@ type WidgetConfig = {
   channelId?: string;
   storeHash?: string;
   customerId?: string | number;
+  customerEmail?: string;
   currentCustomerJwt?: string | null;
 };
 
@@ -35,7 +36,7 @@ function getConfig(): WidgetConfig {
 
 const COUPONS_TAB_INDEX = 1;
 
-export default function RedeemRewardsPage() {
+function RedeemRewardsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const theme = useWidgetTheme();
@@ -51,7 +52,7 @@ export default function RedeemRewardsPage() {
 
   const [config, setConfig] = useState<WidgetConfig>(() => getConfig());
   const [headerPoints, setHeaderPoints] = useState<PointsHeaderState | null>(
-    null
+    null,
   );
   const [pointsLoading, setPointsLoading] = useState(true);
   const [reopenTrigger, setReopenTrigger] = useState(0);
@@ -200,5 +201,19 @@ export default function RedeemRewardsPage() {
         </motion.div>
       </div>
     </WidgetWrapper>
+  );
+}
+
+export default function RedeemRewardsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-[200px] text-sm text-gray-500">
+          Loading...
+        </div>
+      }
+    >
+      <RedeemRewardsContent />
+    </Suspense>
   );
 }

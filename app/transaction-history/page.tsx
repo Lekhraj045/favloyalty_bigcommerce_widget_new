@@ -13,6 +13,7 @@ type WidgetConfig = {
   channelId?: string;
   storeHash?: string;
   customerId?: string | number;
+  customerEmail?: string;
   currentCustomerJwt?: string | null;
 };
 

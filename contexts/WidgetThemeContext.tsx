@@ -2,6 +2,7 @@
 
 import {
   createContext,
+  CSSProperties,
   ReactNode,
   useCallback,
   useContext,
@@ -55,7 +56,7 @@ export function getHeaderStyle(theme: WidgetTheme): CSSProperties {
     ...base,
     backgroundImage: `linear-gradient(${hexToRgba(
       theme.headerColor,
-      0.45
+      0.45,
     )}, ${hexToRgba(theme.headerColor, 0.45)}), url(${theme.headerBgImage})`,
     backgroundSize: `auto, ${PATTERN_TILE_WIDTH}px ${PATTERN_TILE_HEIGHT}px`,
     backgroundRepeat: "repeat, repeat",
@@ -144,22 +145,22 @@ export function WidgetThemeProvider({ children }: { children: ReactNode }) {
 
   const resetThemeToDefault = useCallback(() => {
     setTheme(DEFAULT_THEME);
-    if (isInIframe()) {
-      try {
-        window.parent.postMessage(
-          {
-            type: "fav-loyalty-widget-theme",
-            widgetBgColor: DEFAULT_THEME.headerColor,
-            widgetIconColor: DEFAULT_THEME.iconColor,
-            widgetIconUrlId: DEFAULT_THEME.launcherIconId,
-            launcherType: DEFAULT_THEME.launcherType,
-            label: DEFAULT_THEME.label,
-            position: "bottom-right",
-          },
-          "*"
-        );
-      } catch (_) {}
-    }
+    // if (isInIframe()) {
+    //   try {
+    //     window.parent.postMessage(
+    //       {
+    //         type: "fav-loyalty-widget-theme",
+    //         widgetBgColor: DEFAULT_THEME.headerColor,
+    //         widgetIconColor: DEFAULT_THEME.iconColor,
+    //         widgetIconUrlId: DEFAULT_THEME.launcherIconId,
+    //         launcherType: DEFAULT_THEME.launcherType,
+    //         label: DEFAULT_THEME.label,
+    //         position: "bottom-right",
+    //       },
+    //       "*",
+    //     );
+    //   } catch (_) {}
+    // }
   }, []);
 
   useEffect(() => {
@@ -173,7 +174,7 @@ export function WidgetThemeProvider({ children }: { children: ReactNode }) {
       if (!apiUrl || !storeHash || !channelId) return;
 
       const url = `${apiUrl}/api/widget/channel-settings?storeHash=${encodeURIComponent(
-        storeHash
+        storeHash,
       )}&channelId=${encodeURIComponent(String(channelId))}`;
       fetch(url, { method: "GET" })
         .then((res) => res.json())
@@ -181,26 +182,26 @@ export function WidgetThemeProvider({ children }: { children: ReactNode }) {
           if (cancelled || !data.success) return;
           // When signed out (no customerId), always use default theme so we don't overwrite resetThemeToDefault
           const currentConfig = getConfig();
-          if (!currentConfig.customerId || currentConfig.customerId === "") {
-            setTheme(DEFAULT_THEME);
-            if (isInIframe()) {
-              try {
-                window.parent.postMessage(
-                  {
-                    type: "fav-loyalty-widget-theme",
-                    widgetBgColor: DEFAULT_THEME.headerColor,
-                    widgetIconColor: DEFAULT_THEME.iconColor,
-                    widgetIconUrlId: DEFAULT_THEME.launcherIconId,
-                    launcherType: DEFAULT_THEME.launcherType,
-                    label: DEFAULT_THEME.label,
-                    position: "bottom-right",
-                  },
-                  "*"
-                );
-              } catch (_) {}
-            }
-            return;
-          }
+          // if (!currentConfig.customerId || currentConfig.customerId === "") {
+          //   setTheme(DEFAULT_THEME);
+          //   if (isInIframe()) {
+          //     try {
+          //       window.parent.postMessage(
+          //         {
+          //           type: "fav-loyalty-widget-theme",
+          //           widgetBgColor: DEFAULT_THEME.headerColor,
+          //           widgetIconColor: DEFAULT_THEME.iconColor,
+          //           widgetIconUrlId: DEFAULT_THEME.launcherIconId,
+          //           launcherType: DEFAULT_THEME.launcherType,
+          //           label: DEFAULT_THEME.label,
+          //           position: "bottom-right",
+          //         },
+          //         "*",
+          //       );
+          //     } catch (_) {}
+          //   }
+          //   return;
+          // }
           const headerColor =
             data.widgetBgColor && typeof data.widgetBgColor === "string"
               ? data.widgetBgColor
@@ -268,7 +269,7 @@ export function WidgetThemeProvider({ children }: { children: ReactNode }) {
                   label,
                   position,
                 },
-                "*"
+                "*",
               );
             } catch (_) {}
           }
@@ -289,26 +290,12 @@ export function WidgetThemeProvider({ children }: { children: ReactNode }) {
       if (data?.type === "fav-loyalty-customer") {
         const customerId = data.customerId ?? "";
         if (customerId === "" || String(customerId).trim() === "") {
-          setTheme(DEFAULT_THEME);
-          if (isInIframe()) {
-            try {
-              window.parent.postMessage(
-                {
-                  type: "fav-loyalty-widget-theme",
-                  widgetBgColor: DEFAULT_THEME.headerColor,
-                  widgetIconColor: DEFAULT_THEME.iconColor,
-                  widgetIconUrlId: DEFAULT_THEME.launcherIconId,
-                  launcherType: DEFAULT_THEME.launcherType,
-                  label: DEFAULT_THEME.label,
-                  position: "bottom-right",
-                },
-                "*"
-              );
-            } catch (_) {}
-          }
+          // On sign-out, keep dynamic channel theme
+          doFetch();
         }
       }
     }
+
     function onMessage(event: MessageEvent) {
       if (event.data?.type === "fav-loyalty-widget-opened") {
         onWidgetOpened();

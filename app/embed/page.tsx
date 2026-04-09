@@ -6,6 +6,13 @@ import { useEffect, useMemo, useState } from "react";
 type WidgetTheme = {
   primaryColor?: string;
   headerColor?: string;
+  headingColor?: string;
+  iconColor?: string;
+  launcherIconId?: string | null;
+  launcherType?: "IconOnly" | "LabelOnly" | "Icon&Label";
+  label?: string;
+  backgroundPatternEnabled?: boolean;
+  backgroundPatternUrlId?: string | null;
 };
 
 type WidgetConfig = {

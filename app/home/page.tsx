@@ -99,16 +99,10 @@ export default function HomePage({ config }: { config?: WidgetConfig }) {
       hasFallback,
     });
 
-    function resetWidgetToDefault() {
-      // setAnnouncements([]);
-      theme?.resetThemeToDefault?.();
-    }
-
     if (!apiUrl) {
       console.log("[FavLoyalty Home] effect: no apiUrl -> guest");
       setCustomerData(null);
       setCustomerStatus("guest");
-      resetWidgetToDefault();
       return;
     }
     const useJwt =
@@ -119,7 +113,6 @@ export default function HomePage({ config }: { config?: WidgetConfig }) {
       );
       setCustomerData(null);
       setCustomerStatus("guest");
-      resetWidgetToDefault();
       return;
     }
 
@@ -178,7 +171,6 @@ export default function HomePage({ config }: { config?: WidgetConfig }) {
         } else {
           setCustomerData(null);
           setCustomerStatus("not_in_program");
-          resetWidgetToDefault();
           console.log(
             "[FavLoyalty Home] effect: -> not_in_program",
             data.message || "",
@@ -189,7 +181,6 @@ export default function HomePage({ config }: { config?: WidgetConfig }) {
         if (!cancelled) {
           setCustomerData(null);
           setCustomerStatus("guest");
-          resetWidgetToDefault();
         }
         console.warn("[FavLoyalty Home] effect: fetch failed -> guest", err);
       });
@@ -204,7 +195,6 @@ export default function HomePage({ config }: { config?: WidgetConfig }) {
     config?.storeHash,
     config?.customerId,
     reopenTrigger,
-    theme?.resetThemeToDefault,
   ]);
 
   // Fetch Refer & Earn setting for widget (so card shows enabled/disabled even for guests)

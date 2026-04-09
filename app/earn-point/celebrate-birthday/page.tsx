@@ -4,7 +4,7 @@ import WidgetWrapper from "@/components/WidgetWrapper";
 import { getHeaderStyle, useWidgetTheme } from "@/contexts/WidgetThemeContext";
 import { ArrowLeft } from "lucide-react";
 import { motion } from "motion/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import BirthdaySaved from "./BirthdaySaved";
 import DatepickerBirthday from "./DatepickerBirthday";
 
@@ -15,13 +15,29 @@ type WidgetConfig = {
   customerId?: string;
 };
 
+function parseYyyyMmDd(iso: string): Date | null {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso.trim());
+  if (!m) return null;
+  const y = Number(m[1]);
+  const mo = Number(m[2]) - 1;
+  const d = Number(m[3]);
+  const dt = new Date(y, mo, d);
+  return Number.isNaN(dt.getTime()) ? null : dt;
+}
+
 interface CelebrateBirthdayPageProps {
   config?: WidgetConfig | null;
+  /** Customer already has DOB saved — show update copy and prefill */
+  hasBirthday?: boolean;
+  /** YYYY-MM-DD from current-customer API */
+  initialDob?: string;
   onBack?: () => void;
 }
 
 export default function CelebrateBirthdayPage({
   config,
+  hasBirthday = false,
+  initialDob,
   onBack,
 }: CelebrateBirthdayPageProps) {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -31,6 +47,12 @@ export default function CelebrateBirthdayPage({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const theme = useWidgetTheme();
   const headerStyle = getHeaderStyle(theme);
+
+  useEffect(() => {
+    if (!initialDob) return;
+    const parsed = parseYyyyMmDd(initialDob);
+    if (parsed) setSelectedDate(parsed);
+  }, [initialDob]);
 
   const handleSubmit = async () => {
     if (!selectedDate) return;
@@ -44,7 +66,7 @@ export default function CelebrateBirthdayPage({
     }
     setSubmitError(null);
     setSubmitting(true);
-    const dob = selectedDate.toISOString().slice(0, 10);
+    const dob = selectedDate.toLocaleDateString("en-CA");
     try {
       const res = await fetch(`${apiUrl}/api/widget/customer/birthday`, {
         method: "POST",
@@ -54,7 +76,7 @@ export default function CelebrateBirthdayPage({
       const data = await res.json();
       if (data.success) {
         setPointsAwarded(
-          typeof data.pointsAwarded === "number" ? data.pointsAwarded : 0
+          typeof data.pointsAwarded === "number" ? data.pointsAwarded : 0,
         );
         setShowBirthdaySaved(true);
       } else {
@@ -76,11 +98,13 @@ export default function CelebrateBirthdayPage({
         </div>
 
         <div>
-          <h3 className="text-lg font-semibold">Celebrate Birthday</h3>
+          <h3 className="text-lg font-semibold">
+            {hasBirthday ? "Update birthday" : "Celebrate Birthday"}
+          </h3>
 
           <div className="flex items-center gap-2 mt-1">
             <span className="text-sm whitespace-nowrap overflow-hidden text-ellipsis max-w-[150px] text-white">
-              Earn Points
+              {hasBirthday ? "Change your date of birth" : "Earn Points"}
             </span>
           </div>
         </div>
@@ -125,10 +149,14 @@ export default function CelebrateBirthdayPage({
               <div className="flex flex-col gap-3">
                 <div>
                   <h3 className="text-sm font-medium text-[#303030]">
-                    What is your date of Birth?
+                    {hasBirthday
+                      ? "Update your date of birth"
+                      : "What is your date of Birth?"}
                   </h3>
                   <p className="text-xs text-[#616161]">
-                    You can only change your birthdate once per year.
+                    {hasBirthday
+                      ? "Your saved birthday is shown below. You can only change your birthdate once per year."
+                      : "You can only change your birthdate once per year."}
                   </p>
                 </div>
 

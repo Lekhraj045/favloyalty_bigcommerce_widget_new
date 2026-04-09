@@ -176,7 +176,9 @@ export default function ReferEarnHistoryPage() {
   const pointLogoUrl =
     pointsLogoSrc.startsWith("http") || pointsLogoSrc.startsWith("data:")
       ? pointsLogoSrc
-      : `${process.env.NEXT_PUBLIC_BASE_PATH || ""}/images/${pointsLogoSrc}`;
+      : /^point-icon\d\.svg$/i.test(pointsLogoSrc)
+        ? `${process.env.NEXT_PUBLIC_BASE_PATH || ""}/images/${pointsLogoSrc}`
+        : `${process.env.NEXT_PUBLIC_API_BASE_URL || ""}${pointsLogoSrc.startsWith("/") ? "" : "/"}${pointsLogoSrc}`;
   const pointLogoIsExternal =
     pointsLogoSrc.startsWith("http") || pointsLogoSrc.startsWith("data:");
 

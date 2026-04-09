@@ -89,6 +89,7 @@ function getConfig(): {
   storeHash?: string;
   channelId?: string;
   customerId?: string;
+  theme?: Record<string, unknown>;
 } {
   if (typeof window === "undefined") return {};
   const c = (
@@ -98,6 +99,7 @@ function getConfig(): {
         storeHash?: string;
         channelId?: string;
         customerId?: string;
+        theme?: Record<string, unknown>;
       };
     }
   ).FavLoyaltyWidgetConfig;
@@ -121,7 +123,76 @@ function getConfig(): {
     storeHash,
     channelId: channelIdStr,
     customerId: customerIdStr,
+    theme:
+      fromWindow.theme && typeof fromWindow.theme === "object"
+        ? (fromWindow.theme as Record<string, unknown>)
+        : (fromUrl.theme as Record<string, unknown> | undefined),
   };
+}
+
+function buildHeaderBgImageFromConfigTheme(
+  configTheme: Record<string, unknown> | undefined,
+): string | null {
+  if (!configTheme) return null;
+  const enabled = Boolean(configTheme.backgroundPatternEnabled);
+  const patternId =
+    typeof configTheme.backgroundPatternUrlId === "string"
+      ? configTheme.backgroundPatternUrlId
+      : null;
+  if (!enabled || !patternId) return null;
+
+  const imageName = PATTERN_ID_TO_IMAGE[patternId];
+  if (!imageName) return null;
+
+  const base = process.env.NEXT_PUBLIC_BASE_PATH || "";
+  return `${base}/images/${imageName}`;
+}
+
+function getInitialThemeFromConfig(): WidgetTheme {
+  const cfg = getConfig();
+  const t = cfg.theme;
+  if (!t) return DEFAULT_THEME;
+
+  const headerColor =
+    typeof t.headerColor === "string" && t.headerColor.trim() !== ""
+      ? t.headerColor
+      : DEFAULT_THEME.headerColor;
+  const headingColor =
+    typeof t.headingColor === "string" && t.headingColor.trim() !== ""
+      ? t.headingColor
+      : DEFAULT_THEME.headingColor;
+  const iconColor =
+    typeof t.iconColor === "string" && t.iconColor.trim() !== ""
+      ? t.iconColor
+      : DEFAULT_THEME.iconColor;
+  const launcherIconId =
+    typeof t.launcherIconId === "string" && t.launcherIconId.trim() !== ""
+      ? t.launcherIconId
+      : null;
+  const launcherType =
+    t.launcherType === "LabelOnly" || t.launcherType === "Icon&Label"
+      ? t.launcherType
+      : "IconOnly";
+  const label =
+    typeof t.label === "string" && t.label.trim() !== ""
+      ? t.label.trim()
+      : DEFAULT_THEME.label;
+
+  return {
+    headerColor,
+    headingColor,
+    iconColor,
+    headerBgImage: buildHeaderBgImageFromConfigTheme(t),
+    launcherIconId,
+    launcherType,
+    label,
+  };
+}
+
+function hasThemeInConfig(): boolean {
+  const cfg = getConfig();
+  const t = cfg.theme;
+  return !!(t && typeof t.headerColor === "string" && t.headerColor.trim() !== "");
 }
 
 function isInIframe(): boolean {
@@ -142,6 +213,7 @@ const WidgetThemeContext =
 
 export function WidgetThemeProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<WidgetTheme>(DEFAULT_THEME);
+  const [themeReady, setThemeReady] = useState(false);
 
   const resetThemeToDefault = useCallback(() => {
     setTheme(DEFAULT_THEME);
@@ -164,6 +236,17 @@ export function WidgetThemeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    // Hydration-safe: apply config theme only after mount so server/client initial markup matches.
+    const initialTheme = getInitialThemeFromConfig();
+    setTheme(initialTheme);
+    // Only render immediately when loader already injected a real channel theme.
+    // Otherwise wait for first channel-settings fetch to avoid any default-color flash.
+    if (hasThemeInConfig()) {
+      setThemeReady(true);
+    }
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
 
     function doFetch() {
@@ -171,7 +254,11 @@ export function WidgetThemeProvider({ children }: { children: ReactNode }) {
       const apiUrl = config?.apiUrl?.replace(/\/$/, "");
       const storeHash = config?.storeHash;
       const channelId = config?.channelId;
-      if (!apiUrl || !storeHash || !channelId) return;
+      if (!apiUrl || !storeHash || !channelId) {
+        // If we cannot fetch, avoid blocking forever.
+        setThemeReady(true);
+        return;
+      }
 
       const url = `${apiUrl}/api/widget/channel-settings?storeHash=${encodeURIComponent(
         storeHash,
@@ -273,8 +360,12 @@ export function WidgetThemeProvider({ children }: { children: ReactNode }) {
               );
             } catch (_) {}
           }
+          setThemeReady(true);
         })
-        .catch(() => {});
+        .catch(() => {
+          // On network/API failure, stop blocking UI.
+          setThemeReady(true);
+        });
     }
 
     doFetch();
@@ -314,6 +405,11 @@ export function WidgetThemeProvider({ children }: { children: ReactNode }) {
       }
     };
   }, []);
+
+  if (!themeReady) {
+    // Prevent flashing default theme before channel theme is applied.
+    return null;
+  }
 
   return (
     <WidgetThemeContext.Provider value={{ ...theme, resetThemeToDefault }}>

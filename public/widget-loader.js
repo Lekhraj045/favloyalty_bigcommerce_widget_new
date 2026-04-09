@@ -8,9 +8,9 @@
   console.log("FavLoyalty widget loaded");
   // Configuration
   const DEFAULT_CONFIG = {
-    widgetUrl: "https://favloyaltybigcommercewidget7.shares.zrok.io/", // Update with your deployed widget URL
+    widgetUrl: "https://favloyaltybigcommercewidget9.shares.zrok.io/", // Update with your deployed widget URL
     position: "bottom-right",
-    apiUrl: "https://favbigcommerce7.shares.zrok.io", // Your backend API URL
+    apiUrl: "https://favbigcommerce8.shares.zrok.io", // Your backend API URL
     storeId: "",
     storeHash: "",
     appClientId: "",
@@ -1431,6 +1431,27 @@
           },
           config,
         );
+        // Keep resolved channel theme in config so iframe gets real theme on first open
+        config.theme = Object.assign({}, config.theme || {}, {
+          headerColor:
+            data.widgetBgColor ||
+            (config.theme && config.theme.headerColor) ||
+            "#62a63f",
+          headingColor: data.headingColor || "#ffffff",
+          iconColor: data.widgetIconColor || "#ffffff",
+          launcherIconId: data.widgetIconUrlId || null,
+          launcherType:
+            data.launcherType === "LabelOnly" ||
+            data.launcherType === "Icon&Label"
+              ? data.launcherType
+              : "IconOnly",
+          label:
+            data.label != null && String(data.label).trim() !== ""
+              ? String(data.label).trim()
+              : "Reward",
+          backgroundPatternEnabled: !!data.backgroundPatternEnabled,
+          backgroundPatternUrlId: data.backgroundPatternUrlId || null,
+        });
         var pos = data.position || data.widgetButton;
         if (pos) {
           effectivePosition = normalizePosition(pos);
@@ -1458,7 +1479,7 @@
 
   // Initialize widget
   function initWidget() {
-    const config = getConfig();
+    var config = getConfig();
 
     if (!config.widgetUrl) {
       console.error(
@@ -1467,18 +1488,57 @@
       return;
     }
 
-    // Position from URL (when script has ?position=bottom-left) or default; fetchAndApplyTheme may update later
-    effectivePosition = normalizePosition(config.position) || "bottom-right";
-    config.position = effectivePosition;
+    // Check visibility (limit reached, channel disabled, etc.) before rendering anything
+    var apiUrl = config.apiUrl ? config.apiUrl.replace(/\/$/, "") : "";
+    var storeHash = config.storeHash ? String(config.storeHash).trim() : "";
+    var channelId = config.channelId != null ? String(config.channelId) : "";
 
-    // Create toggle button only; container/iframe created on first open (with Current Customer JWT)
-    toggleButton = createToggleButton(config, function (e) {
-      console.log("Widget toggle button clicked");
-      toggleWidget(config);
-    });
+    function _doInit() {
+      // Position from URL (when script has ?position=bottom-left) or default; fetchAndApplyTheme may update later
+      effectivePosition = normalizePosition(config.position) || "bottom-right";
+      config.position = effectivePosition;
 
-    // Apply theme from Customise Widget so launcher shows correct Widget Color and icon from first paint
-    fetchAndApplyTheme(config);
+      // Create toggle button only; container/iframe created on first open (with Current Customer JWT)
+      toggleButton = createToggleButton(config, function (e) {
+        console.log("Widget toggle button clicked");
+        toggleWidget(config);
+      });
+
+      // Apply theme from Customise Widget so launcher shows correct Widget Color and icon from first paint
+      fetchAndApplyTheme(config);
+    }
+
+    if (!apiUrl || !isValidStoreHash(storeHash)) {
+      // No API URL to check — render normally
+      _doInit();
+      return;
+    }
+
+    var visibilityUrl =
+      apiUrl +
+      "/api/widget/visibility?storeHash=" +
+      encodeURIComponent(storeHash) +
+      (channelId ? "&channelId=" + encodeURIComponent(channelId) : "");
+
+    fetch(visibilityUrl, { method: "GET", credentials: "omit" })
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (data) {
+        if (!data.visible) {
+          // Widget is disabled (limit reached or channel off) — do not render
+          console.log(
+            "[FavLoyalty] Widget hidden:",
+            data.reason || "not visible",
+          );
+          return;
+        }
+        _doInit();
+      })
+      .catch(function () {
+        // On any network error fall back to rendering the widget normally
+        _doInit();
+      });
   }
 
   // Initialize when DOM is ready

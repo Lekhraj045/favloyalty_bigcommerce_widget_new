@@ -26,6 +26,10 @@ type PointsData = {
   pointsUnit: string;
   currency?: string;
   hasBirthday?: boolean;
+  /** Saved date of birth YYYY-MM-DD (when hasBirthday) */
+  dob?: string;
+  /** Birthday Celebration points already earned this calendar year — show "Used" */
+  birthdayRewardClaimedThisYear?: boolean;
   hasCompletedProfile?: boolean;
   hasSubscribedNewsletter?: boolean;
 };
@@ -44,6 +48,21 @@ const DEFAULT_WAYS_TO_EARN: WaysToEarn = {
   newsletter: { enabled: false, points: 0 },
   everyPurchase: { enabled: false, points: 0 },
 };
+
+function formatSavedDob(iso: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso.trim());
+  if (!m) return iso;
+  const y = Number(m[1]);
+  const mo = Number(m[2]) - 1;
+  const d = Number(m[3]);
+  const dt = new Date(y, mo, d);
+  if (Number.isNaN(dt.getTime())) return iso;
+  return dt.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
 
 function getConfig(): WidgetConfig {
   if (typeof window === "undefined") return {};
@@ -123,6 +142,8 @@ export default function EarnPointPage() {
         pointsUnit: "Points",
         currency: undefined,
         hasBirthday: false,
+        dob: undefined,
+        birthdayRewardClaimedThisYear: false,
         hasCompletedProfile: false,
         hasSubscribedNewsletter: false,
       });
@@ -145,6 +166,12 @@ export default function EarnPointPage() {
       .then((data) => {
         if (cancelled) return;
         const hasBirthday = !!data.hasBirthday;
+        const dob =
+          typeof data.dob === "string" && /^\d{4}-\d{2}-\d{2}$/.test(data.dob)
+            ? data.dob
+            : undefined;
+        const birthdayRewardClaimedThisYear =
+          !!data.birthdayRewardClaimedThisYear;
         const hasCompletedProfile = !!data.hasCompletedProfile;
         const hasSubscribedNewsletter = !!data.hasSubscribedNewsletter;
         if (data.success && data.inLoyaltyProgram) {
@@ -155,6 +182,8 @@ export default function EarnPointPage() {
             currency:
               typeof data.currency === "string" ? data.currency : undefined,
             hasBirthday,
+            dob,
+            birthdayRewardClaimedThisYear,
             hasCompletedProfile,
             hasSubscribedNewsletter,
           });
@@ -165,6 +194,8 @@ export default function EarnPointPage() {
             currency:
               typeof data.currency === "string" ? data.currency : undefined,
             hasBirthday,
+            dob,
+            birthdayRewardClaimedThisYear,
             hasCompletedProfile,
             hasSubscribedNewsletter,
           });
@@ -177,6 +208,8 @@ export default function EarnPointPage() {
             pointsUnit: "Points",
             currency: undefined,
             hasBirthday: false,
+            dob: undefined,
+            birthdayRewardClaimedThisYear: false,
             hasCompletedProfile: false,
             hasSubscribedNewsletter: false,
           });
@@ -299,6 +332,8 @@ export default function EarnPointPage() {
           customerId:
             config.customerId != null ? String(config.customerId) : undefined,
         }}
+        hasBirthday={!!pointsData?.hasBirthday}
+        initialDob={pointsData?.dob}
         onBack={() => {
           setShowCelebrateBirthday(false);
           setReopenTrigger((t) => t + 1);
@@ -349,11 +384,11 @@ export default function EarnPointPage() {
             <div
               onClick={(e) => {
                 e.stopPropagation();
-                if (pointsData?.hasBirthday) return;
+                if (pointsData?.birthdayRewardClaimedThisYear) return;
                 setShowCelebrateBirthday(true);
               }}
               className={`border border-[#DEDEDE] bg-white rounded-xl p-4 flex items-center gap-3 justify-between transition-all duration-300 ${
-                pointsData?.hasBirthday
+                pointsData?.birthdayRewardClaimedThisYear
                   ? "opacity-60 pointer-events-none cursor-default"
                   : "hover:shadow-sm cursor-pointer"
               }`}
@@ -373,7 +408,7 @@ export default function EarnPointPage() {
                     <h3 className="text-sm font-medium text-[#303030]">
                       Birthday Gift
                     </h3>
-                    {pointsData?.hasBirthday && (
+                    {pointsData?.birthdayRewardClaimedThisYear ? (
                       <span
                         className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium shrink-0"
                         style={{
@@ -383,15 +418,25 @@ export default function EarnPointPage() {
                       >
                         Used
                       </span>
-                    )}
+                    ) : pointsData?.hasBirthday ? (
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium shrink-0 bg-sky-100 text-sky-900">
+                        Update
+                      </span>
+                    ) : null}
                   </div>
                   <p className="text-xs text-[#616161]">
-                    Earn {waysToEarn.birthday.points} {pointsUnit.toLowerCase()}
+                    {pointsData?.birthdayRewardClaimedThisYear
+                      ? `You have claimed your birthday ${waysToEarn.birthday.points} ${pointsUnit.toLowerCase()} for this year.`
+                      : pointsData?.hasBirthday
+                        ? pointsData.dob
+                          ? `Birthday Date: ${formatSavedDob(pointsData.dob)} — tap to update. Earn ${waysToEarn.birthday.points} ${pointsUnit.toLowerCase()} on your birthday.`
+                          : `Birthday on file — tap to update. Earn ${waysToEarn.birthday.points} ${pointsUnit.toLowerCase()} on your birthday.`
+                        : `Earn ${waysToEarn.birthday.points} ${pointsUnit.toLowerCase()} on your birthday.`}
                   </p>
                 </div>
               </div>
 
-              {!pointsData?.hasBirthday && (
+              {!pointsData?.birthdayRewardClaimedThisYear && (
                 <div className="shrink-0">
                   <ChevronRight size={18} />
                 </div>
